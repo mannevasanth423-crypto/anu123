@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hey Neetu. Open this.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --r:#E8002D;--r2:#ff1a3d;--rg:rgba(232,0,45,0.18);
+  --g:#B8972A;--gc:rgba(184,151,42,0.2);
+  --bk:#050508;--dk:#080810;--c1:#0e0e16;--c2:#14141e;
+  --b:#1c1c28;--wh:#f0eff6;--mu:#4a4a5e;--tx:#b0afc4;
+  --fw:'Bebas Neue',sans-serif;--fs:'Playfair Display',serif;--fm:'IBM Plex Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{background:var(--bk);color:var(--wh);font-family:var(--fs);overflow-x:hidden;cursor:none}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:var(--bk)}::-webkit-scrollbar-thumb{background:var(--r);border-radius:2px}
+
+/* ═══════════════════════════════════════
+   GRAIN OVERLAY
+═══════════════════════════════════════ */
+#grain{position:fixed;inset:-100%;width:300%;height:300%;pointer-events:none;z-index:8000;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.028;animation:grain .3s steps(1) infinite}
+@keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-5%,-4%)}40%{transform:translate(4%,5%)}60%{transform:translate(-3%,3%)}80%{transform:translate(5%,-4%)}100%{transform:translate(0,0)}}
+
+/* ═══════════════════════════════════════
+   TELEMETRY HUD (fixed overlay)
+═══════════════════════════════════════ */
+#hud{position:fixed;bottom:1.5rem;left:1.5rem;z-index:8500;pointer-events:none;display:flex;flex-direction:column;gap:.4rem}
+.hud-row{display:flex;align-items:center;gap:.6rem;font-family:var(--fm);font-size:.5rem;letter-spacing:.2em;color:var(--mu)}
+.hud-val{color:var(--r);font-size:.65rem;letter-spacing:.05em;min-width:2.5rem}
+.hud-val.gold{color:var(--g)}
+.hud-bar{width:60px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.hud-fill{height:100%;background:var(--r);border-radius:2px;transition:width .15s linear}
+.hud-fill.gold{background:var(--g)}
+#hud-gear{font-family:var(--fw);font-size:2.2rem;color:var(--r);line-height:1;letter-spacing:.05em;opacity:.4}
+#hud-drs{font-family:var(--fm);font-size:.45rem;letter-spacing:.35em;color:var(--mu);margin-top:.2rem}
+#hud-drs.active{color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,.5)}
+@media(max-width:600px){#hud{display:none}}
+
+/* ═══════════════════════════════════════
+   CURSOR + MAGNETIC TRAIL
+═══════════════════════════════════════ */
+#cur{width:6px;height:6px;background:var(--r);border-radius:50%;position:fixed;pointer-events:none;z-index:9500;left:0;top:0;transform:translate(-50%,-50%);transition:width .25s,height .25s;box-shadow:0 0 8px var(--r)}
+#cur-ring{width:36px;height:36px;border:1px solid rgba(232,0,45,.4);border-radius:50%;position:fixed;pointer-events:none;z-index:9499;left:0;top:0;transform:translate(-50%,-50%);transition:width .3s,height .3s,border-color .3s;will-change:transform}
+#cur.big ~ #cur-ring,
+#cur-ring.big{width:60px;height:60px;border-color:rgba(232,0,45,.7);border-width:1.5px}
+#cur-canvas{position:fixed;inset:0;pointer-events:none;z-index:9400}
+
+/* ═══════════════════════════════════════
+   PROGRESS BAR — RPM STYLE
+═══════════════════════════════════════ */
+#prog-wrap{position:fixed;top:0;left:0;right:0;height:3px;z-index:9300;background:rgba(255,255,255,.03)}
+#prog{height:100%;width:0%;position:relative;background:linear-gradient(90deg,var(--r),#ff4d00,var(--g));box-shadow:0 0 12px var(--r),0 0 25px rgba(232,0,45,.4);transition:width .1s linear}
+#prog::after{content:'';position:absolute;right:0;top:-3px;width:8px;height:9px;background:var(--r);border-radius:50%;box-shadow:0 0 15px var(--r),0 0 30px var(--r)}
+
+/* ═══════════════════════════════════════
+   LOADER
+═══════════════════════════════════════ */
+#loader{position:fixed;inset:0;background:var(--bk);z-index:9200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;transition:opacity .8s ease}
+#loader.out{opacity:0;pointer-events:none}
+#loader-canvas{position:absolute;inset:0}
+.ld-label{font-family:var(--fm);font-size:.65rem;letter-spacing:.5em;color:var(--mu);text-transform:uppercase;position:relative;z-index:1}
+.lights{display:flex;gap:1.4rem;position:relative;z-index:1}
+.lgt{width:48px;height:48px;border-radius:50%;background:#0c0002;border:2px solid #1a000a;transition:all .1s ease;position:relative}
+.lgt::after{content:'';position:absolute;inset:-6px;border-radius:50%;opacity:0;transition:opacity .2s}
+.lgt.on{background:var(--r);border-color:var(--r2);box-shadow:0 0 20px var(--r),0 0 50px rgba(232,0,45,.5),0 0 90px rgba(232,0,45,.2),inset 0 0 15px rgba(255,120,120,.3)}
+.lgt.on::after{background:radial-gradient(circle,rgba(232,0,45,.3),transparent 70%);opacity:1;animation:lpulse .4s ease infinite alternate}
+@keyframes lpulse{from{transform:scale(1)}to{transform:scale(1.3)}}
+.lgt.out2{background:var(--bk);border-color:#0a0005;box-shadow:none;transition:all .3s ease}
+#ld-msg{font-family:var(--fm);font-size:.7rem;letter-spacing:.5em;color:var(--mu);min-height:1.2rem;text-transform:uppercase;position:relative;z-index:1}
+#ld-go{font-family:var(--fw);font-size:clamp(4rem,12vw,9rem);color:var(--r);letter-spacing:.08em;position:absolute;opacity:0;z-index:1;text-shadow:0 0 40px var(--r),0 0 80px rgba(232,0,45,.4);transform:scale(.5);transition:opacity .3s,transform .3s}
+#ld-go.show{opacity:1;transform:scale(1)}
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+nav{position:fixed;top:0;left:0;right:0;z-index:900;padding:.9rem 3rem;display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,8,.9);backdrop-filter:blur(30px);border-bottom:1px solid rgba(232,0,45,.08)}
+nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,0,45,.3),transparent);animation:navline 3s linear infinite}
+@keyframes navline{0%{background-position:-100% 0}100%{background-position:200% 0}}
+.nl{font-family:var(--fw);font-size:1.3rem;letter-spacing:.08em;color:var(--wh)}
+.nl span{color:var(--r)}
+.nlinks{display:flex;gap:2rem;list-style:none}
+.nlinks a{font-family:var(--fm);font-size:.55rem;letter-spacing:.22em;color:var(--mu);text-decoration:none;text-transform:uppercase;transition:color .2s;position:relative}
+.nlinks a::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--r);transform:scaleX(0);transition:transform .25s}
+.nlinks a:hover{color:var(--r)}
+.nlinks a:hover::after{transform:scaleX(1)}
+@media(max-width:700px){.nlinks{display:none}}
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:5rem 2rem 3rem;text-align:center}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hz{position:relative;z-index:2}
+.h-tag{font-family:var(--fm);font-size:.65rem;letter-spacing:.5em;color:var(--r);text-transform:uppercase;margin-bottom:2rem;display:inline-block;border:1px solid rgba(232,0,45,.25);padding:.4rem 1.5rem;border-radius:2px;animation:fin .8s ease .3s both;position:relative;overflow:hidden}
+.h-tag::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(232,0,45,.15),transparent);animation:tagshine 3s ease infinite 2s}
+@keyframes tagshine{0%{left:-100%}100%{left:200%}}
+.h-title{font-family:var(--fw);font-size:clamp(5rem,17vw,15rem);line-height:.85;letter-spacing:.02em;position:relative}
+.h-t1{display:block;color:var(--wh);text-shadow:0 0 60px rgba(255,255,255,.05)}
+.h-t2{display:block;color:transparent;-webkit-text-stroke:2px var(--r);letter-spacing:.05em;filter:drop-shadow(0 0 20px rgba(232,0,45,.3))}
+.gc{color:var(--r);opacity:.6}
+.h-sub{font-family:var(--fs);font-style:italic;font-size:clamp(.95rem,2.2vw,1.3rem);color:rgba(255,255,255,.4);max-width:520px;margin:2.5rem auto 0;line-height:1.85;animation:fin .9s ease 1s both}
+.scrl{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.7rem;animation:fin .8s ease 1.5s both}
+.scrl span{font-family:var(--fm);font-size:.52rem;letter-spacing:.35em;color:var(--mu)}
+.sl{width:1px;height:52px;position:relative;overflow:hidden}
+.sl::before{content:'';position:absolute;top:-100%;left:0;width:100%;height:100%;background:linear-gradient(to bottom,transparent,var(--r),var(--r),transparent);animation:slide 1.8s ease infinite}
+@keyframes slide{0%{top:-100%}100%{top:200%}}
+
+/* ═══════════════════════════════════════
+   SPEED BURST — section transition flash
+═══════════════════════════════════════ */
+.speed-burst{position:fixed;inset:0;pointer-events:none;z-index:8900;opacity:0;background:radial-gradient(ellipse at 50% 50%,rgba(232,0,45,.12),transparent 70%)}
+.speed-burst.fire{animation:burst .4s ease forwards}
+@keyframes burst{0%{opacity:0;transform:scale(.8)}30%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+
+/* ═══════════════════════════════════════
+   COMMON
+═══════════════════════════════════════ */
+.ck{width:100%;height:10px;background:repeating-conic-gradient(rgba(255,255,255,.055) 0% 25%,transparent 0% 50%) 0 0/14px 14px;position:relative;overflow:hidden}
+.ck::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(232,0,45,.2),transparent);width:60px;animation:ckscan 4s linear infinite}
+@keyframes ckscan{0%{transform:translateX(-100px)}100%{transform:translateX(calc(100vw + 100px))}}
+
+.sec{padding:7rem 2rem;position:relative;overflow:hidden}
+.inn{max-width:1100px;margin:0 auto}
+.lbl{font-family:var(--fm);font-size:.6rem;letter-spacing:.45em;color:var(--r);text-transform:uppercase;display:block;margin-bottom:1.2rem}
+.big{font-family:var(--fw);font-size:clamp(2.8rem,6vw,5.5rem);line-height:.95;letter-spacing:.02em;margin-bottom:1.5rem}
+.big span{color:var(--r)}
+.bod{font-family:var(--fs);font-size:clamp(.95rem,1.8vw,1.12rem);line-height:1.92;color:var(--tx);max-width:700px}
+.bod em{color:var(--wh);font-style:italic}.bod strong{color:var(--wh);font-style:normal;font-weight:600}
+
+/* REVEAL */
+[data-r]{opacity:0;transform:translateY(40px) scale(.97);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
+[data-r].rIn{opacity:1;transform:none}
+[data-r="left"]{transform:translateX(-40px)}
+[data-r="right"]{transform:translateX(40px)}
+[data-r="scale"]{transform:scale(.88)}
+@keyframes fin{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════
+   LETTER SECTION
+═══════════════════════════════════════ */
+#letter{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:7rem 2rem;position:relative;overflow:hidden;background:var(--bk)}
+#ltr-canvas{position:absolute;inset:0;z-index:0}
+.letter-inner{max-width:820px;width:100%;position:relative;z-index:2}
+.letter-eyebrow{font-family:var(--fm);font-size:.6rem;letter-spacing:.5em;color:var(--r);text-transform:uppercase;display:block;margin-bottom:2rem}
+.letter-to{font-family:var(--fw);font-size:clamp(3.5rem,10vw,8rem);line-height:.88;margin-bottom:3rem;letter-spacing:.02em}
+.letter-to .lt1{display:block;color:var(--wh)}
+.letter-to .lt2{display:block;color:transparent;-webkit-text-stroke:1.5px rgba(232,0,45,.5);font-size:.55em;letter-spacing:.08em}
+.letter-body{font-family:var(--fs);font-size:clamp(1.05rem,2vw,1.22rem);line-height:2.05;color:rgba(255,255,255,.72)}
+.letter-body em{color:var(--wh);font-style:italic}
+.letter-body strong{color:var(--wh);font-style:normal;font-weight:600}
+.letter-body p{margin-bottom:1.8rem}
+.letter-divider{width:60px;height:1px;background:var(--r);margin:3rem 0;opacity:.4;box-shadow:0 0 8px var(--r)}
+.vegas-memory{margin:3rem 0;padding:2.5rem 3rem;background:rgba(232,0,45,.04);border-left:2px solid rgba(232,0,45,.45);border-radius:0 6px 6px 0;position:relative;overflow:hidden}
+.vegas-memory::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--r),transparent)}
+.vegas-memory::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 0% 50%,rgba(232,0,45,.06),transparent 60%)}
+.vm-label{font-family:var(--fm);font-size:.58rem;letter-spacing:.35em;color:var(--r);text-transform:uppercase;margin-bottom:1.2rem;display:block}
+.vm-text{font-family:var(--fs);font-style:italic;font-size:clamp(1rem,2vw,1.15rem);line-height:1.95;color:rgba(255,255,255,.65);position:relative;z-index:1}
+.vm-text p{margin-bottom:1.2rem}.vm-text p:last-child{margin-bottom:0}
+.letter-sign{margin-top:3rem;font-family:var(--fs);font-style:italic;color:rgba(255,255,255,.32);font-size:.95rem;line-height:1.8}
+.letter-sign strong{color:rgba(255,255,255,.45);font-style:normal}
+
+/* ═══════════════════════════════════════
+   SORRY
+═══════════════════════════════════════ */
+#sorry{background:var(--dk)}
+.sbox{margin-top:3rem;background:var(--c1);border:1px solid var(--b);border-left:3px solid var(--r);border-radius:6px;padding:2.5rem;position:relative;overflow:hidden}
+.sbox::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--r),transparent)}
+.si{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--fm);font-size:.78rem;line-height:1.9;color:var(--tx)}
+.si:last-child{border-bottom:none}
+.si .ico{flex-shrink:0;font-size:1rem;padding-top:.1rem}
+.red{color:var(--r)}.gold{color:var(--g)}
+
+/* ═══════════════════════════════════════
+   F1 BASICS CARDS
+═══════════════════════════════════════ */
+.bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.4rem;margin-top:3.5rem}
+.bc{background:var(--c1);border:1px solid var(--b);border-radius:8px;padding:1.8rem;cursor:none;transition:border-color .3s,box-shadow .4s;position:relative;overflow:hidden}
+.bc::before{content:'';position:absolute;top:0;left:-100%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);transition:left .5s ease;pointer-events:none}
+.bc:hover{border-color:rgba(232,0,45,.5);box-shadow:0 0 0 1px rgba(232,0,45,.1),0 20px 60px rgba(232,0,45,.08),0 0 40px rgba(232,0,45,.04)}
+.bc:hover::before{left:150%}
+.bc-em{font-size:2.2rem;display:block;margin-bottom:1rem}
+.bc-t{font-family:var(--fw);font-size:1.2rem;letter-spacing:.04em;color:var(--wh);margin-bottom:.6rem}
+.bc-d{font-family:var(--fs);font-size:.84rem;line-height:1.82;color:var(--tx)}
+.bc-q{margin-top:1rem;padding:.8rem;background:rgba(232,0,45,.06);border-radius:4px;font-style:italic;font-size:.8rem;color:rgba(255,255,255,.38);border-left:2px solid rgba(232,0,45,.35)}
+
+/* ═══════════════════════════════════════
+   LIFESTYLE
+═══════════════════════════════════════ */
+#lifestyle{background:var(--dk)}
+.stat-row{display:flex;flex-wrap:wrap;gap:1rem;margin:3rem 0}
+.stat-box{flex:1;min-width:155px;background:var(--c1);border:1px solid var(--b);border-radius:6px;padding:1.5rem;text-align:center;cursor:none;transition:transform .3s,border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.stat-box::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--r);transform:scaleX(0);transition:transform .4s;box-shadow:0 0 8px var(--r)}
+.stat-box:hover{transform:translateY(-5px);border-color:rgba(232,0,45,.3);box-shadow:0 16px 50px rgba(232,0,45,.07)}
+.stat-box:hover::after{transform:scaleX(1)}
+.stn{font-family:var(--fw);font-size:clamp(2.2rem,4.5vw,3.5rem);line-height:1;color:var(--r);display:block}
+.stn.gold{color:var(--g)}
+.stl{font-family:var(--fm);font-size:.58rem;letter-spacing:.18em;color:var(--mu);text-transform:uppercase;display:block;margin-top:.5rem}
+.lc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.4rem;margin-top:3rem}
+.lc{background:var(--c1);border:1px solid var(--b);border-radius:8px;padding:2rem;position:relative;overflow:hidden;cursor:none;transition:border-color .3s,transform .3s,box-shadow .3s}
+.lc:hover{border-color:rgba(184,151,42,.4);transform:translateY(-4px);box-shadow:0 20px 60px rgba(184,151,42,.06)}
+.lc-stripe{position:absolute;top:0;left:0;right:0;height:3px}
+.lci{font-size:2rem;display:block;margin-bottom:1rem}
+.lct{font-family:var(--fw);font-size:1.2rem;letter-spacing:.04em;color:var(--wh);margin-bottom:.7rem}
+.lcd{font-family:var(--fs);font-size:.85rem;line-height:1.85;color:var(--tx)}
+.lcf{margin-top:1rem;font-family:var(--fm);font-size:.68rem;color:var(--g);letter-spacing:.04em;line-height:1.8}
+
+/* ═══════════════════════════════════════
+   TEAMS
+═══════════════════════════════════════ */
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.4rem;margin-top:3.5rem}
+.tc{background:var(--c1);border:1px solid var(--b);border-radius:8px;overflow:hidden;cursor:none;transform-style:preserve-3d;will-change:transform;transition:box-shadow .35s,border-color .35s}
+.tc:hover{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px rgba(0,0,0,.6)}
+.tc-stripe{height:4px;width:100%;position:relative}
+.tc-stripe::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transform:translateX(-100%);transition:transform .6s ease}
+.tc:hover .tc-stripe::after{transform:translateX(100%)}
+.tc-vis{height:145px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.tc-num{font-family:var(--fw);font-size:7rem;color:rgba(255,255,255,.06);line-height:1;user-select:none;letter-spacing:-.05em;transition:transform .4s ease,color .3s}
+.tc:hover .tc-num{transform:scale(1.08) translateX(-5px)}
+.tc-abbr{position:absolute;bottom:.8rem;right:1rem;font-family:var(--fw);font-size:.85rem;letter-spacing:.15em;padding:.25rem .7rem;border-radius:2px;background:rgba(0,0,0,.65)}
+.tc-b{padding:1.3rem}
+.tc-n{font-family:var(--fw);font-size:1.1rem;letter-spacing:.04em;color:var(--wh);margin-bottom:.25rem}
+.tc-loc{font-family:var(--fm);font-size:.62rem;color:var(--mu);margin-bottom:.8rem}
+.tc-dl{font-family:var(--fm);font-size:.58rem;letter-spacing:.18em;color:var(--r);text-transform:uppercase;margin-bottom:.3rem}
+.tc-dn{font-family:var(--fs);font-size:.85rem;color:var(--tx);line-height:1.7}
+.tc-f{margin-top:.8rem;font-style:italic;font-size:.76rem;color:rgba(255,255,255,.28);line-height:1.7;border-top:1px solid var(--b);padding-top:.8rem}
+.tc-badge{display:inline-block;margin-top:.5rem;font-family:var(--fm);font-size:.55rem;letter-spacing:.1em;padding:.2rem .6rem;border-radius:2px;background:var(--gc);color:var(--g);border:1px solid rgba(184,151,42,.25)}
+
+/* ═══════════════════════════════════════
+   DRIVERS
+═══════════════════════════════════════ */
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.4rem;margin-top:3.5rem}
+.dc{background:var(--c1);border:1px solid var(--b);border-radius:8px;overflow:hidden;cursor:none;transform-style:preserve-3d;will-change:transform;transition:border-color .3s,box-shadow .35s}
+.dc:hover{box-shadow:0 25px 70px rgba(0,0,0,.55)}
+.dc-top{height:140px;position:relative;display:flex;align-items:flex-end;justify-content:flex-start;padding:1.2rem;overflow:hidden}
+.dc-bg-num{position:absolute;right:-.2rem;bottom:-.8rem;font-family:var(--fw);font-size:8rem;color:rgba(255,255,255,.055);line-height:1;pointer-events:none;user-select:none;letter-spacing:-.05em;transition:transform .4s ease}
+.dc:hover .dc-bg-num{transform:scale(1.1) translateX(-10px)}
+.dc-flag{font-size:1.4rem;position:relative;z-index:1}
+.dc-pill{position:absolute;top:.8rem;right:.8rem;font-family:var(--fm);font-size:.58rem;letter-spacing:.12em;padding:.22rem .6rem;border-radius:2px;background:rgba(0,0,0,.7)}
+.dc-b{padding:1.2rem}
+.dc-n{font-family:var(--fw);font-size:1.2rem;letter-spacing:.03em;line-height:1.1;margin-bottom:.2rem}
+.dc-team{font-family:var(--fm);font-size:.58rem;letter-spacing:.2em;margin-bottom:.8rem}
+.dc-stats{display:flex;gap:1.5rem;margin-bottom:.8rem}
+.ds{text-align:center}
+.dsv{font-family:var(--fw);font-size:1.4rem;color:var(--wh);display:block}
+.dsl{font-family:var(--fm);font-size:.52rem;color:var(--mu);letter-spacing:.1em;text-transform:uppercase}
+.dc-v{font-style:italic;font-size:.82rem;color:rgba(255,255,255,.4);line-height:1.65;border-top:1px solid var(--b);padding-top:.8rem}
+
+/* ═══════════════════════════════════════
+   RULES
+═══════════════════════════════════════ */
+#rules{background:var(--dk)}
+.rl-list{margin-top:3rem;display:flex;flex-direction:column;gap:1rem}
+.rl{display:grid;grid-template-columns:2.8rem 1fr;gap:1.5rem;background:var(--c1);border:1px solid var(--b);border-radius:6px;padding:1.5rem 2rem;align-items:start;transition:border-color .3s,background .3s,transform .2s;cursor:pointer;position:relative;overflow:hidden}
+.rl::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--r);transform:scaleY(0);transform-origin:bottom;transition:transform .3s ease}
+.rl:hover{border-color:rgba(232,0,45,.3);background:var(--c2);transform:translateX(4px)}
+.rl:hover::before{transform:scaleY(1)}
+.rnum{font-family:var(--fw);font-size:2.2rem;color:transparent;-webkit-text-stroke:1.5px var(--r);line-height:1}
+.rt{font-family:var(--fw);font-size:1.1rem;letter-spacing:.03em;color:var(--wh);margin-bottom:.4rem}
+.rd{font-family:var(--fs);font-size:.83rem;line-height:1.82;color:var(--tx)}
+.rfun{margin-top:.5rem;font-style:italic;font-size:.78rem;color:rgba(184,151,42,.6)}
+
+/* ═══════════════════════════════════════
+   FLAGS
+═══════════════════════════════════════ */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1rem;margin-top:2.5rem}
+.fc{background:var(--c1);border:1px solid var(--b);border-radius:6px;padding:1.1rem;text-align:center;transition:transform .25s,box-shadow .25s}
+.fc:hover{transform:translateY(-4px);box-shadow:0 12px 35px rgba(0,0,0,.4)}
+.fv{width:100%;height:40px;border-radius:3px;margin-bottom:.65rem}
+.fn{font-family:var(--fm);font-size:.6rem;letter-spacing:.12em;color:var(--wh);display:block;margin-bottom:.3rem}
+.fm2{font-family:var(--fs);font-size:.72rem;color:var(--mu);line-height:1.5}
+
+/* ═══════════════════════════════════════
+   CALENDAR
+═══════════════════════════════════════ */
+#calendar{position:relative;overflow:hidden}
+#calendar::before{content:'2026';position:absolute;font-family:var(--fw);font-size:25vw;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.02);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;z-index:0}
+.cw{overflow-x:auto;margin-top:3rem;position:relative;z-index:1}
+table.ct{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.72rem;min-width:680px}
+table.ct thead tr{background:rgba(232,0,45,.07);border-bottom:1px solid rgba(232,0,45,.35)}
+table.ct th{padding:.9rem 1rem;text-align:left;font-size:.57rem;letter-spacing:.25em;color:var(--r);text-transform:uppercase}
+table.ct td{padding:.8rem 1rem;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+table.ct tbody tr{transition:background .2s}
+table.ct tbody tr:hover{background:rgba(255,255,255,.025)}
+table.ct tr.our{background:rgba(232,0,45,.06)}
+table.ct tr.our td{border-bottom-color:rgba(232,0,45,.12)}
+.cr{color:var(--mu);font-size:.58rem;display:block;margin-bottom:.12rem}
+.cn{font-weight:600;color:var(--wh);font-size:.74rem}
+.cc{color:var(--mu);font-size:.62rem;display:block;margin-top:.1rem}
+.nj{color:#7ec8f0}.ind{color:#f0a87e}
+.wg{background:rgba(50,220,80,.1);color:#6eff8a;border:1px solid rgba(50,220,80,.18);display:inline-block;padding:.18rem .55rem;border-radius:2px;font-size:.52rem;letter-spacing:.1em}
+.wo{background:rgba(255,180,0,.1);color:#ffc857;border:1px solid rgba(255,180,0,.22);display:inline-block;padding:.18rem .55rem;border-radius:2px;font-size:.52rem;letter-spacing:.1em}
+.wh2{background:rgba(232,0,45,.1);color:#ff6b6b;border:1px solid rgba(232,0,45,.22);display:inline-block;padding:.18rem .55rem;border-radius:2px;font-size:.52rem;letter-spacing:.1em}
+.wou{background:rgba(184,151,42,.15);color:var(--g);border:1px solid rgba(184,151,42,.35);display:inline-block;padding:.18rem .55rem;border-radius:2px;font-size:.52rem;letter-spacing:.1em;font-weight:700}
+.crn{font-size:.9rem;margin-right:.3rem}
+
+/* ═══════════════════════════════════════
+   JOURNEY
+═══════════════════════════════════════ */
+#journey{background:var(--dk);overflow:hidden}
+.jp-grid{display:flex;flex-direction:column;gap:1.5rem;margin-top:4rem}
+.jp{background:var(--c1);border:1px solid var(--b);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:190px 1fr;cursor:none;transition:border-color .4s,box-shadow .4s,transform .3s;position:relative}
+.jp::after{content:'';position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(232,0,45,0);transition:box-shadow .3s}
+.jp:hover{border-color:rgba(232,0,45,.35);box-shadow:0 20px 80px rgba(232,0,45,.08);transform:translateX(4px)}
+.jp:hover::after{box-shadow:inset 0 0 0 1px rgba(232,0,45,.08)}
+.jp-left{padding:2.5rem 2rem;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.jp-yr{font-family:var(--fm);font-size:.62rem;letter-spacing:.35em;margin-bottom:.5rem}
+.jp-flag{font-size:2.5rem;display:block;margin-bottom:.5rem}
+.jp-country{font-family:var(--fw);font-size:1.6rem;letter-spacing:.03em;color:var(--wh);line-height:1}
+.jp-race{font-family:var(--fm);font-size:.62rem;margin-top:.3rem}
+.jp-right{padding:2.5rem 2rem 2.5rem 3rem;position:relative}
+.jp-right::before{content:'';position:absolute;left:0;top:10%;bottom:10%;width:1px;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.07),transparent)}
+.jp-t{font-family:var(--fw);font-size:clamp(1.3rem,3vw,2rem);letter-spacing:.03em;color:var(--wh);margin-bottom:.8rem;line-height:1.1}
+.jp-d{font-family:var(--fs);font-size:.9rem;line-height:1.85;color:var(--tx)}
+.jp-tag{display:inline-block;margin-top:1rem;font-family:var(--fm);font-size:.58rem;letter-spacing:.12em;padding:.28rem .7rem;border-radius:2px}
+.jp-tag.up{background:rgba(50,220,80,.1);color:#6eff8a;border:1px solid rgba(50,220,80,.2)}
+.jp-tag.gold{background:rgba(184,151,42,.15);color:var(--g);border:1px solid rgba(184,151,42,.3)}
+@media(max-width:640px){.jp{grid-template-columns:1fr}.jp-right::before{display:none}.jp-left{padding:1.5rem 1.5rem .5rem}.jp-right{padding:1rem 1.5rem 1.5rem}}
+
+/* ═══════════════════════════════════════
+   PROMISE
+═══════════════════════════════════════ */
+#promise{background:var(--bk)}
+.pbox{margin-top:4rem;padding:3.5rem;border-radius:12px;border:1px solid rgba(232,0,45,.22);position:relative;overflow:hidden;text-align:center}
+.pbox::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--r),transparent);animation:pline 4s ease infinite}
+@keyframes pline{0%,100%{opacity:.4}50%{opacity:1}}
+.pbox::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(232,0,45,.07),transparent 60%);pointer-events:none}
+.pvow{font-family:var(--fs);font-style:italic;font-size:clamp(1.1rem,2.3vw,1.45rem);line-height:1.92;color:rgba(255,255,255,.82);margin-bottom:2rem;position:relative;z-index:1}
+.pvow strong{color:var(--wh);font-style:normal;font-weight:600}
+.psig{font-family:var(--fm);font-size:.65rem;letter-spacing:.2em;color:rgba(255,255,255,.25);position:relative;z-index:1}
+
+/* ═══════════════════════════════════════
+   CLOSING
+═══════════════════════════════════════ */
+#closing{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7rem 2rem;position:relative;overflow:hidden;background:var(--dk)}
+#cl-canvas{position:absolute;inset:0;z-index:0}
+.cl-z{position:relative;z-index:2}
+.cl-em{font-size:4.5rem;display:block;margin-bottom:2rem;animation:cf 2.5s ease infinite;filter:drop-shadow(0 0 20px rgba(232,0,45,.4))}
+@keyframes cf{0%{transform:translateY(0) rotate(-8deg) scale(1)}50%{transform:translateY(-18px) rotate(8deg) scale(1.1)}100%{transform:translateY(0) rotate(-8deg) scale(1)}}
+.cl-t{font-family:var(--fw);font-size:clamp(3rem,9vw,8rem);line-height:.9;margin-bottom:2rem;text-shadow:0 0 60px rgba(232,0,45,.2)}
+.cl-t span{color:var(--r);display:block;text-shadow:0 0 40px rgba(232,0,45,.5)}
+.cl-sub{font-family:var(--fs);font-style:italic;font-size:clamp(1rem,2vw,1.25rem);color:rgba(255,255,255,.45);max-width:560px;line-height:1.85;margin-bottom:3.5rem}
+.podium{display:flex;align-items:flex-end;justify-content:center;max-width:320px;width:100%;margin:0 auto}
+.pod{display:flex;flex-direction:column;align-items:center;font-family:var(--fs);font-size:.72rem;color:var(--mu)}
+.pem{font-size:2rem;margin-bottom:.4rem}
+.plbl{font-size:.7rem;text-align:center;line-height:1.4;margin-bottom:.4rem}
+.pb{width:92px;border-radius:4px 4px 0 0;background:var(--c1);border:1px solid var(--b)}
+.pb.p1{height:90px;border-top:2px solid var(--g);box-shadow:0 0 20px rgba(184,151,42,.2)}
+.pb.p2{height:60px;border-top:2px solid #888}
+.pb.p3{height:42px;border-top:2px solid #6b3c1a}
+
+footer{padding:2.5rem 2rem;text-align:center;border-top:1px solid rgba(232,0,45,.08)}
+footer p{font-family:var(--fm);font-size:.63rem;color:var(--mu);line-height:2.2}
+.fr{color:var(--r)}
+
+/* ═══════════════════════════════════════
+   TICKER
+═══════════════════════════════════════ */
+.ticker-wrap{overflow:hidden;background:var(--r);padding:.75rem 0;position:relative}
+.ticker-wrap::before,.ticker-wrap::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:1}
+.ticker-wrap::before{left:0;background:linear-gradient(90deg,var(--r),transparent)}
+.ticker-wrap::after{right:0;background:linear-gradient(-90deg,var(--r),transparent)}
+.ticker{display:inline-flex;gap:4rem;white-space:nowrap;animation:tick 18s linear infinite;font-family:var(--fm);font-size:.62rem;letter-spacing:.3em;color:rgba(255,255,255,.9)}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ═══════════════════════════════════════
+   SPARK OVERLAY (click/hover sparks)
+═══════════════════════════════════════ */
+#spark-canvas{position:fixed;inset:0;pointer-events:none;z-index:8800}
+</style>
+</head>
+<body>
+
+<div id="grain"></div>
+<div id="prog-wrap"><div id="prog"></div></div>
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<canvas id="cur-canvas"></canvas>
+<canvas id="spark-canvas"></canvas>
+<div class="speed-burst" id="burst"></div>
+
+<!-- TELEMETRY HUD -->
+<div id="hud">
+  <div id="hud-gear">1</div>
+  <div class="hud-row">
+    <span>SPD</span>
+    <div class="hud-bar"><div class="hud-fill" id="hf-spd" style="width:15%"></div></div>
+    <span class="hud-val" id="hv-spd">42</span>
+  </div>
+  <div class="hud-row">
+    <span>RPM</span>
+    <div class="hud-bar"><div class="hud-fill gold" id="hf-rpm" style="width:30%"></div></div>
+    <span class="hud-val gold" id="hv-rpm">4.2k</span>
+  </div>
+  <div class="hud-row">
+    <span>THR</span>
+    <div class="hud-bar"><div class="hud-fill" id="hf-thr" style="width:20%"></div></div>
+    <span class="hud-val" id="hv-thr">20%</span>
+  </div>
+  <div id="hud-drs">DRS CLOSED</div>
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+  <canvas id="loader-canvas"></canvas>
+  <div class="ld-label">Something important is loading</div>
+  <div class="lights">
+    <div class="lgt" id="l1"></div><div class="lgt" id="l2"></div>
+    <div class="lgt" id="l3"></div><div class="lgt" id="l4"></div><div class="lgt" id="l5"></div>
+  </div>
+  <div id="ld-msg">For Neetu. With everything.</div>
+  <div id="ld-go">GO!</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nl">For <span>Neetu.</span></div>
+  <ul class="nlinks">
+    <li><a href="#letter">For You</a></li>
+    <li><a href="#sorry">Apology</a></li>
+    <li><a href="#f1basics">What's F1</a></li>
+    <li><a href="#lifestyle">The World</a></li>
+    <li><a href="#teams">Teams</a></li>
+    <li><a href="#drivers">Drivers</a></li>
+    <li><a href="#calendar">Schedule</a></li>
+    <li><a href="#journey">The Promise</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hz">
+    <div class="h-tag">hey. this is just for you.</div>
+    <div class="h-title">
+      <span class="h-t1" id="sc1">NEETU.</span>
+      <span class="h-t2" id="sc2">I'M SORRY.</span>
+    </div>
+    <p class="h-sub">Before you close this — just give it a minute. I made all of this for you. Scroll down.</p>
+    <div class="scrl"><span>Keep scrolling</span><div class="sl"></div></div>
+  </div>
+</section>
+
+<div class="ck"></div>
+
+<!-- PERSONAL LETTER -->
+<section id="letter">
+  <canvas id="ltr-canvas"></canvas>
+  <div class="letter-inner">
+    <span class="letter-eyebrow" data-r>// before any of the F1 stuff — this is the real reason</span>
+    <div class="letter-to" data-r>
+      <span class="lt1">THIS IS</span>
+      <span class="lt2">FOR YOU, NEETU.</span>
+    </div>
+    <div class="letter-body">
+      <p data-r>I want to tell you something before you read the rest of this. I tried to put everything I had into making this — every detail, every word — the way I would if I could sit next to you and say it out loud. That's not always easy for me. You know that better than anyone. But I'm trying. This is me trying.</p>
+      <div class="letter-divider" data-r></div>
+      <div class="vegas-memory" data-r>
+        <span class="vm-label">// Las Vegas, 2024 — a moment I keep going back to</span>
+        <div class="vm-text">
+          <p>I keep thinking about Vegas. Specifically that night on the Strip when you were wearing that black bodycon dress and I remember thinking — I need to take a picture of this because I never want to forget how you looked right there. So I kept trying to get the shot in front of the Bellagio fountain. You know how I am with phones. The fountain was going, the lights were everywhere, and I kept messing up the angle.</p>
+          <p>And then this photographer — just some guy walking past — stopped and said something like <em>"you two look incredible together, can I take a photo of you?"</em> And you, being you, looked at him completely deadpan and said you'd just met me. Like we were strangers. I didn't know whether to laugh or pretend I didn't know you either.</p>
+          <p>But then he looked at me and said <em>"man, you're so lucky."</em> And I remember thinking — yeah. I really am. Not in a passing way. In the kind of way that sits with you and you carry it home. I still carry it.</p>
+        </div>
+      </div>
+      <div class="letter-divider" data-r></div>
+      <p data-r>That's the thing, Neetu. <strong>I know how lucky I am.</strong> I don't always show it the way I should. These last few weeks have been hard — for both of us — and I know I've made things harder than they needed to be. I'm not going to sit here and say I've figured everything out. I haven't.</p>
+      <p data-r>But here's what I do know. <em>I want to spend my life creating moments with you.</em> The Vegas kind. The kind where we're somewhere extraordinary, or somewhere completely ordinary, and it doesn't matter because we're together and it turns into a story we'll tell for years. I want a hundred more of those. I want a lifetime of them.</p>
+      <p data-r>I know there's a long road between now and the day we get married. Some days it feels far. Some days it feels impossible. But every single second of waiting is worth it to me. <strong>Every one.</strong> Because it's you at the end of it. It's always been you.</p>
+      <p data-r>So this — all of it, everything below this — is your first gift. Not for a birthday. Not for an occasion. Just because I wanted to give you something that was completely, specifically, only ever going to be for you. <em>I miss you, Neetu. More than I say. More than you probably know right now.</em></p>
+    </div>
+    <div class="letter-sign" data-r>
+      <strong>— Vasanth</strong><br>
+      Written at a truly unreasonable hour, with too much coffee,<br>thinking about you in that black dress by the Bellagio fountain.
+    </div>
+  </div>
+</section>
+
+<div class="ck"></div>
+
+<!-- SORRY -->
+<section id="sorry" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// from me to you — no sugarcoating</span>
+    <h2 class="big" data-r>I messed up.<br><span>A lot. I know.</span></h2>
+    <p class="bod" data-r>And I'm not going to dress it up. You know what happened. I know what happened. But this isn't just an apology — it's the start of something. Keep reading.</p>
+    <div class="sbox" data-r>
+      <div class="si"><span class="ico">❌</span><span><span class="red">The Australian GP — Race 1.</span> Our first race together. I missed it completely. Midnight NJ time is harder — but that's a reason I should have planned better, not an excuse. I let our first one pass.</span></div>
+      <div class="si"><span class="ico">❌</span><span><span class="red">Monaco.</span> I cancelled the trip. The most romantic race in the world. The one we both had circled. I took that away and I'm genuinely sorry for it.</span></div>
+      <div class="si"><span class="ico">❌</span><span><span class="red">These last few weeks.</span> I haven't been easy. That's it. I'm not going into it here — you were there. But I see it. I want to do better.</span></div>
+      <div class="si"><span class="ico">💛</span><span><span class="gold">This whole thing.</span> I researched everything properly. I went deep. I built this because you deserve more than a sorry text. There's a real promise at the end. Keep scrolling.</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="ck"></div>
+
+<!-- F1 BASICS -->
+<section id="f1basics" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// chapter 01 — because neither of us knew anything</span>
+    <h2 class="big" data-r>What actually <span>is</span><br>Formula 1?</h2>
+    <p class="bod" data-r>We both had no idea. I've done the research. Here's everything — explained like I'm texting you, not reading out Wikipedia.</p>
+    <div class="bc-grid">
+      <div class="bc" data-r data-spark><span class="bc-em">🏎️</span><div class="bc-t">The Cars</div><div class="bc-d">The fastest road-circuit racing machines ever built. Zero to 100 km/h in 2.5 seconds. Top speed over 350 km/h. So aerodynamically extreme they generate more downforce than their own body weight — at full speed, they could drive upside down in a tunnel. Each car costs $15–20 million. The steering wheel alone is $65,000 and has 25 buttons on it.</div><div class="bc-q">"It's what happens when you give aerospace engineers a racing problem and tell them money doesn't matter."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">📅</span><div class="bc-t">The Season</div><div class="bc-d">24 races. Different countries every two weeks. Each race is a Grand Prix. Points go top-10 — 25 for 1st down to 1 for 10th. The driver with the most wins the World Drivers' Championship. Teams with the most combined win Constructors'. It runs March to December and the drama never fully stops.</div><div class="bc-q">"The World Cup happens every 4 years. F1 happens every 2 weeks, year round, in a different country. Different frequency, different addiction."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">📍</span><div class="bc-t">The Circuits</div><div class="bc-d">Some purpose-built, some on real city streets. Monaco uses the actual roads of Monte Carlo. Singapore races under 1,500 floodlights at night. Las Vegas runs down the Strip. Each circuit has a personality: Monza rewards pure speed, Monaco rewards millimetre precision, Spa rewards bravery in unpredictable weather.</div><div class="bc-q">"Monaco is so narrow two cars side by side is barely possible. 20 of them try to start it every year anyway."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">🛞</span><div class="bc-t">Tyres & Pit Stops</div><div class="bc-d">Three compounds: Soft (fastest, wears fast), Medium (balanced), Hard (durable). Every driver must use at least two per race — meaning everyone pits. The stop: 2.5 seconds, 20 people. But the strategy — when to pit, which tyre, how many stops — is where races are actually won. Smarter timing regularly beats faster cars.</div><div class="bc-q">"More races won in the pit lane on a laptop than on the track. Both are happening simultaneously."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">🔓</span><div class="bc-t">DRS — The Overtake Weapon</div><div class="bc-d">Within 1 second of the car ahead, in designated zones, you can open your rear wing and gain ~15 km/h straight-line. Without DRS, following closely is nearly impossible due to turbulent air. DRS zones are where you hold your breath. When it activates behind someone on a straight — that's F1's most electric moment.</div><div class="bc-q">"The legal overtake button. You'll know when it's happening."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">🚗</span><div class="bc-t">Safety Car = Free Drama</div><div class="bc-d">A crash brings out the Safety Car — everyone queues in race order. Teams pit for free tyres during this window. A late Safety Car with 5 laps left can completely flip a result that took 80 laps to build. It happens regularly. When those boards go out, commentators lose their minds and they're right to.</div><div class="bc-q">"Late Safety Car = the race restarts. Everything built over 80 laps reshuffled in one lap."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">🏆</span><div class="bc-t">The Championship</div><div class="bc-d">24-race marathon. In 2021, Verstappen overtook Hamilton on the very last lap of the very last race to win the title. The entire sport was in shock for days. A bad start doesn't end you. You can lead by 50 points and blow it. Nothing is settled until Abu Dhabi in December. By race 5, we'll be doing championship maths together.</div><div class="bc-q">"Nothing is decided until December. That's what makes 24 races feel like one long, impossible story."</div></div>
+      <div class="bc" data-r data-spark><span class="bc-em">⚖️</span><div class="bc-t">Penalties & Drama</div><div class="bc-d">Stewards review every incident — dangerous moves, track limit violations, contact. 5-second, 10-second time additions. Every decision is immediately debated by millions online. About 70% of all post-race social media is either "that was a penalty" or "that absolutely was not a penalty" and nobody ever agrees. It's part of the culture. You'll have opinions within two races.</div><div class="bc-q">"The stewards giveth and the stewards taketh. Usually from whoever you're currently rooting for."</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LIFESTYLE -->
+<section id="lifestyle" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// chapter 02 — the world we're walking into</span>
+    <h2 class="big" data-r>The <span>Life</span> Around<br>the Race</h2>
+    <p class="bod" data-r>F1 isn't just a sport. It's the most glamorous, most globally distributed, most expensively produced sporting event on earth. And this is exactly the kind of life we always talked about wanting.</p>
+    <div class="stat-row">
+      <div class="stat-box" data-r><span class="stn" id="s1">0</span><span class="stl">countries per season</span></div>
+      <div class="stat-box" data-r><span class="stn gold" id="s2">$0M</span><span class="stl">in yachts at Monaco</span></div>
+      <div class="stat-box" data-r><span class="stn" id="s3">0</span><span class="stl">km/h at Monza</span></div>
+      <div class="stat-box" data-r><span class="stn gold" id="s4">0G</span><span class="stl">G-force in corners</span></div>
+      <div class="stat-box" data-r><span class="stn" id="s5">$0</span><span class="stl">for one steering wheel</span></div>
+    </div>
+    <div class="lc-grid">
+      <div class="lc" data-r data-spark><div class="lc-stripe" style="background:linear-gradient(90deg,var(--g),transparent)"></div><span class="lci">🛥️</span><div class="lct">Monaco Race Week</div><div class="lcd">The harbour fills with over $350 million in superyachts during race week. People watch from the decks. Streets become a catwalk. Cannes Film Festival runs the same week, 45 minutes along the coast. Royalty, tech founders, celebrities, racing legends — everyone in one tiny principality for one extraordinary week. Walking Monte Carlo's streets during the GP is an experience that makes everything else feel small.</div><div class="lcf">📍 The Monaco GP has run since 1929. The circuit fee: reportedly zero. Prestige considered sufficient payment.</div></div>
+      <div class="lc" data-r data-spark><div class="lc-stripe" style="background:linear-gradient(90deg,var(--r),transparent)"></div><span class="lci">🎪</span><div class="lct">The Paddock Club</div><div class="lcd">F1's most exclusive hospitality. Above the pit lane — eye-level views of the cars. Open bar. Proper food. Pit lane access before the start. At Monaco: $5,000–$12,000 per day per person. Business deals happen here. Tom Cruise has been here. Hamilton walks past you to his car. It's not a VIP area. It is a completely different reality.</div><div class="lcf">💡 At Silverstone, Paddock Club stretches 200 metres along the pit lane. Cars pass underneath at 300 km/h.</div></div>
+      <div class="lc" data-r data-spark><div class="lc-stripe" style="background:linear-gradient(90deg,var(--g),transparent)"></div><span class="lci">⭐</span><div class="lct">The Celebrity World</div><div class="lcd">F1 has the highest average household income fanbase of any sport. The paddock: European racing money meets Silicon Valley meets Hollywood. Rihanna, LeBron James, Pharrell, Usher — regulars. Hamilton attends the Met Gala in Valentino. Leclerc photographed at Milan Fashion Week. Netflix's Drive to Survive made this mainstream culture. We showed up at exactly the right time.</div><div class="lcf">📺 Drive to Survive on Netflix. We are watching this together. Non-negotiable. It's genuinely great TV.</div></div>
+      <div class="lc" data-r data-spark><div class="lc-stripe" style="background:linear-gradient(90deg,var(--r),transparent)"></div><span class="lci">🌍</span><div class="lct">A City That Moves</div><div class="lcd">The entire F1 paddock — 10 teams, thousands of staff, hundreds of tonnes of equipment — relocates to a new country every two weeks. The only sport where the venue is the product. The paddock is a self-contained city worth billions. Each race builds up and then completely disappears. Watching it live is something that genuinely cannot be replicated on a screen.</div><div class="lcf">✈️ Singapore GP builds and dismantles 300,000 LED lights every year. Up for 2 weeks. Then gone.</div></div>
+      <div class="lc" data-r data-spark><div class="lc-stripe" style="background:linear-gradient(90deg,var(--g),transparent)"></div><span class="lci">🏎️</span><div class="lct">The Physics Is Insane</div><div class="lcd">Drivers experience up to 6G in corners — six times their body weight pressing on them at once. Heart rate averages 170bpm for 90 minutes straight. F1 drivers are among the most physically conditioned athletes on earth. They just do it at 300 km/h in a carbon fibre shell where the gap between 1st and 20th is measured in milliseconds across a 9-month season.</div><div class="lcf">🏋️ Verstappen averages 190bpm during qualifying. For 90 straight seconds. Repeatedly. Per session.</div></div>
+      <div class="lc" data-r data-spark><div class="lc-stripe" style="background:linear-gradient(90deg,var(--r),transparent)"></div><span class="lci">💰</span><div class="lct">The Scale of It</div><div class="lcd">Budget cap per team: $145M a year. Red Bull's total operation is estimated at $400M+. Hamilton earns ~$55M annually. A single engine lasts 3 races before complete rebuild. The sport sold for $8 billion in 2016 and grows every year. F1 is not a sport with money around it. Money, with a sport built inside. Our F1 account is the entry ticket to watching all of this happen.</div><div class="lcf">💡 The Monaco trophy given to the winner is the real original. Not a replica. The actual trophy. Only race that does this.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>🏎️ FORMULA ONE WORLD CHAMPIONSHIP</span><span>🛥️ $350M IN YACHTS AT MONACO</span><span>⭐ THE MOST EXPENSIVE SPORT ON EARTH</span><span>🌍 24 COUNTRIES · 9 MONTHS · ONE CHAMPION</span><span>💛 THIS IS THE WORLD WE'RE WALKING INTO</span><span>🏎️ FORMULA ONE WORLD CHAMPIONSHIP</span><span>🛥️ $350M IN YACHTS AT MONACO</span><span>⭐ THE MOST EXPENSIVE SPORT ON EARTH</span><span>🌍 24 COUNTRIES · 9 MONTHS · ONE CHAMPION</span><span>💛 THIS IS THE WORLD WE'RE WALKING INTO</span>
+  </div>
+</div>
+
+<!-- TEAMS -->
+<section id="teams" class="sec" style="background:var(--dk)">
+  <div class="inn">
+    <span class="lbl" data-r>// chapter 03 — pick one. that's your team forever.</span>
+    <h2 class="big" data-r>The <span>10 Teams</span></h2>
+    <p class="bod" data-r>Ten constructors. Two cars each. Every team hates every other team politely in public and violently in private. Pick your favourite. No returns.</p>
+    <div class="tg">
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#1E3A5F,#3671C6)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#0d1a33,#1a3060)"><div class="tc-num" style="color:rgba(54,113,198,.2)">RB</div><div class="tc-abbr" style="color:#3671C6">RED BULL</div></div><div class="tc-b"><div class="tc-n">Red Bull Racing</div><div class="tc-loc">📍 Milton Keynes, UK</div><div class="tc-dl">Drivers</div><div class="tc-dn">Max Verstappen · Liam Lawson</div><div class="tc-f">4 consecutive championships. Their car was unsolvable for 2 full seasons. Funded by an energy drink empire — which somehow makes perfect sense once you watch them operate.</div><span class="tc-badge">🏆 6× Constructors' Champ</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#C8002D,#FF3355)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#2a0008,#700015)"><div class="tc-num" style="color:rgba(200,0,45,.18)">SF</div><div class="tc-abbr" style="color:#E8002D">FERRARI</div></div><div class="tc-b"><div class="tc-n">Ferrari</div><div class="tc-loc">📍 Maranello, Italy</div><div class="tc-dl">Drivers</div><div class="tc-dn">Charles Leclerc · Lewis Hamilton</div><div class="tc-f">The oldest team. Racing since 1950. Italian passion, red cars, collective cardiac events every race. Hamilton joining in 2025 was the biggest transfer in the sport's history.</div><span class="tc-badge">🏆 16× Constructors' Champ</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#00D2BE,#00e8d0)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#001e1c,#003530)"><div class="tc-num" style="color:rgba(0,210,190,.12)">W</div><div class="tc-abbr" style="color:#00D2BE">MERCEDES</div></div><div class="tc-b"><div class="tc-n">Mercedes AMG</div><div class="tc-loc">📍 Brackley, UK</div><div class="tc-dl">Drivers</div><div class="tc-dn">George Russell · Kimi Antonelli</div><div class="tc-f">Won 8 consecutive titles 2014–2021. Dominated so completely the sport changed its rules. Rebuilding now. The Silver Arrows don't stay down for long.</div><span class="tc-badge">🏆 8× Constructors' Champ</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#FF8000,#FF4500)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#2a1400,#5a2d00)"><div class="tc-num" style="color:rgba(255,128,0,.15)">MCL</div><div class="tc-abbr" style="color:#FF8000">McLAREN</div></div><div class="tc-b"><div class="tc-n">McLaren</div><div class="tc-loc">📍 Woking, UK</div><div class="tc-dl">Drivers</div><div class="tc-dn">Lando Norris · Oscar Piastri</div><div class="tc-f">Won the 2024 Constructors' Championship after 26 years without one. Norris and Piastri are the best pairing on the grid. You will love this team. I already know you will.</div><span class="tc-badge">🏆 9× Constructors' Champ</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#006F62,#00a88c)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#001a16,#003528)"><div class="tc-num" style="color:rgba(0,111,98,.2)">AM</div><div class="tc-abbr" style="color:#006F62">ASTON MARTIN</div></div><div class="tc-b"><div class="tc-n">Aston Martin</div><div class="tc-loc">📍 Silverstone, UK</div><div class="tc-dl">Drivers</div><div class="tc-dn">Fernando Alonso · Lance Stroll</div><div class="tc-f">British racing green and Alonso — in F1 since 2001, won 2 titles, and has never once acknowledged that retirement applies to him. He's 43 and still faster than people half his age.</div><span class="tc-badge">🏆 0× (but Alonso is eternal)</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#0050FF,#0030bb)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#00082a,#001050)"><div class="tc-num" style="color:rgba(0,80,255,.12)">FW</div><div class="tc-abbr" style="color:#0050FF">WILLIAMS</div></div><div class="tc-b"><div class="tc-n">Williams</div><div class="tc-loc">📍 Grove, UK</div><div class="tc-dl">Drivers</div><div class="tc-dn">Alex Albon · Carlos Sainz</div><div class="tc-f">Once the greatest constructor after Ferrari. Fell hard for a decade, now climbing back. Albon extracts everything the car can give. Sainz joined from Ferrari. The comeback story everyone is quietly rooting for.</div><span class="tc-badge">🏆 7× Constructors' Champ</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#FF87BC,#bb0060)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#1a0010,#3a0025)"><div class="tc-num" style="color:rgba(255,135,188,.1)">ALP</div><div class="tc-abbr" style="color:#FF87BC">ALPINE</div></div><div class="tc-b"><div class="tc-n">Alpine</div><div class="tc-loc">📍 Enstone, UK</div><div class="tc-dl">Drivers</div><div class="tc-dn">Pierre Gasly · Jack Doohan</div><div class="tc-f">The French team. Always midfield, always one strategy call from brilliant or completely self-defeating. One of the most beautiful liveries on the grid. Results are a source of ongoing debate.</div><span class="tc-badge">🏆 2× (as Renault)</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#B0B4B8,#606468)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#111,#1f1f1f)"><div class="tc-num" style="color:rgba(180,180,180,.1)">VF</div><div class="tc-abbr" style="color:#aaa">HAAS</div></div><div class="tc-b"><div class="tc-n">Haas F1</div><div class="tc-loc">📍 Kannapolis, USA 🇺🇸</div><div class="tc-dl">Drivers</div><div class="tc-dn">Nico Hülkenberg · Esteban Ocon</div><div class="tc-f">The only American team on the grid. Tighter budget, Ferrari engines, routinely outperform where they have any right to be. You're in New Jersey. This is your team by geography. I said what I said.</div><span class="tc-badge">🇺🇸 American-Owned</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#5E8FAA,#90b8d4)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#0a1420,#152030)"><div class="tc-num" style="color:rgba(94,143,170,.15)">C</div><div class="tc-abbr" style="color:#5E8FAA">SAUBER</div></div><div class="tc-b"><div class="tc-n">Kick Sauber → Audi</div><div class="tc-loc">📍 Hinwil, Switzerland</div><div class="tc-dl">Drivers</div><div class="tc-dn">Nico Hülkenberg · Gabriel Bortoleto</div><div class="tc-f">Becoming the Audi works team — one of the most significant manufacturer entries in F1 history. Bortoleto is a wildly exciting young talent. A team in full transformation. Worth watching every step.</div><span class="tc-badge">⚙️ Audi Works Entry Coming</span></div></div>
+      <div class="tc" data-r data-tilt data-spark><div class="tc-stripe" style="background:linear-gradient(90deg,#6692FF,#1B40B0)"></div><div class="tc-vis" style="background:linear-gradient(135deg,#06080f,#0c1235)"><div class="tc-num" style="color:rgba(102,146,255,.12)">RB2</div><div class="tc-abbr" style="color:#6692FF">VCARB</div></div><div class="tc-b"><div class="tc-n">Visa CashApp RB</div><div class="tc-loc">📍 Faenza, Italy</div><div class="tc-dl">Drivers</div><div class="tc-dn">Yuki Tsunoda · Isack Hadjar</div><div class="tc-f">Red Bull's junior team. For developing the next generation. Yuki Tsunoda is a genuine fan favourite — fast, expressive, memorable on team radio. The team that gives young talent a shot at everything.</div><span class="tc-badge">🌟 Red Bull Junior Programme</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DRIVERS -->
+<section id="drivers" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// chapter 04 — the people we'll be screaming about</span>
+    <h2 class="big" data-r>The <span>Drivers</span></h2>
+    <p class="bod" data-r>Twenty of them. Here are the ones who are going to matter to us this year and every year after.</p>
+    <div class="dg">
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#0d1a33,#1a3060)"><div class="dc-flag">🇳🇱</div><div class="dc-bg-num" style="color:rgba(54,113,198,.2)">1</div><div class="dc-pill" style="color:#3671C6">RED BULL</div></div><div class="dc-b"><div class="dc-n">Max Verstappen</div><div class="dc-team" style="color:#3671C6">RED BULL · #1</div><div class="dc-stats"><div class="ds"><span class="dsv" style="color:var(--g)">4×</span><span class="dsl">WDC</span></div><div class="ds"><span class="dsv">60+</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">27</span><span class="dsl">Age</span></div></div><div class="dc-v">The final boss. Four consecutive world titles. Dry Dutch humour, zero interest in your opinion, fastest racecraft on the grid. You'll have a very strong opinion about this man by race 6. I guarantee it.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#2a0008,#700015)"><div class="dc-flag">🇬🇧</div><div class="dc-bg-num" style="color:rgba(232,0,45,.18)">44</div><div class="dc-pill" style="color:#E8002D">FERRARI</div></div><div class="dc-b"><div class="dc-n">Lewis Hamilton</div><div class="dc-team" style="color:#E8002D">FERRARI · #44</div><div class="dc-stats"><div class="ds"><span class="dsv" style="color:var(--g)">7×</span><span class="dsl">WDC</span></div><div class="ds"><span class="dsv">104</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">40</span><span class="dsl">Age</span></div></div><div class="dc-v">Greatest of all time by numbers. Left Mercedes after 12 years to join Ferrari at 40 — chasing a record 8th title, in red. Attends the Met Gala. Photographed in Dior. Also the best F1 driver alive. Both things, simultaneously.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#2a1400,#6b2e00)"><div class="dc-flag">🇬🇧</div><div class="dc-bg-num" style="color:rgba(255,128,0,.18)">4</div><div class="dc-pill" style="color:#FF8000">McLAREN</div></div><div class="dc-b"><div class="dc-n">Lando Norris</div><div class="dc-team" style="color:#FF8000">McLAREN · #4</div><div class="dc-stats"><div class="ds"><span class="dsv">4+</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">25</span><span class="dsl">Age</span></div><div class="ds"><span class="dsv">🧡</span><span class="dsl">Vibes</span></div></div><div class="dc-v">Funny, self-deprecating, streams video games, makes memes about himself — then goes out and beats everyone. He will be your favourite. I'm not predicting this. I'm informing you of something already decided.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#1a0005,#4a0012)"><div class="dc-flag">🇲🇨</div><div class="dc-bg-num" style="color:rgba(232,0,45,.15)">16</div><div class="dc-pill" style="color:#E8002D">FERRARI</div></div><div class="dc-b"><div class="dc-n">Charles Leclerc</div><div class="dc-team" style="color:#E8002D">FERRARI · #16</div><div class="dc-stats"><div class="ds"><span class="dsv">8+</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">27</span><span class="dsl">Age</span></div><div class="ds"><span class="dsv">🎹</span><span class="dsl">Pianist</span></div></div><div class="dc-v">Born in Monaco. Drives for Ferrari. Has never won the Monaco Grand Prix. The universe is testing him personally. Also plays piano, cries when happy, is phenomenal in qualifying, Ferrari's most beloved since Schumacher.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#2a1400,#5a2800)"><div class="dc-flag">🇦🇺</div><div class="dc-bg-num" style="color:rgba(255,128,0,.15)">81</div><div class="dc-pill" style="color:#FF8000">McLAREN</div></div><div class="dc-b"><div class="dc-n">Oscar Piastri</div><div class="dc-team" style="color:#FF8000">McLAREN · #81</div><div class="dc-stats"><div class="ds"><span class="dsv">3+</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">24</span><span class="dsl">Age</span></div><div class="ds"><span class="dsv">🧊</span><span class="dsl">Ice cold</span></div></div><div class="dc-v">The least dramatic person in the most dramatic sport. Makes racing look effortless. Could win the championship and call it "pretty good." He is 24. Already a race winner. Already quietly terrifying.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#001a16,#003528)"><div class="dc-flag">🇪🇸</div><div class="dc-bg-num" style="color:rgba(0,111,98,.2)">14</div><div class="dc-pill" style="color:#006F62">ASTON</div></div><div class="dc-b"><div class="dc-n">Fernando Alonso</div><div class="dc-team" style="color:#006F62">ASTON MARTIN · #14</div><div class="dc-stats"><div class="ds"><span class="dsv" style="color:var(--g)">2×</span><span class="dsl">WDC</span></div><div class="ds"><span class="dsv">32</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">43</span><span class="dsl">Age(!)</span></div></div><div class="dc-v">In F1 since 2001. Won his first title the year some rivals were in primary school. 390+ races. Still faster than people who've been racing 2 years. Retirement is apparently not a concept that applies to him.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#001e1c,#003530)"><div class="dc-flag">🇬🇧</div><div class="dc-bg-num" style="color:rgba(0,210,190,.15)">63</div><div class="dc-pill" style="color:#00D2BE">MERCEDES</div></div><div class="dc-b"><div class="dc-n">George Russell</div><div class="dc-team" style="color:#00D2BE">MERCEDES · #63</div><div class="dc-stats"><div class="ds"><span class="dsv">2+</span><span class="dsl">Wins</span></div><div class="ds"><span class="dsv">27</span><span class="dsl">Age</span></div><div class="ds"><span class="dsv">📊</span><span class="dsl">Data</span></div></div><div class="dc-v">Called "Mr. Saturday" — always extracts maximum in qualifying. Calculated, ambitious. Now leading Mercedes with Hamilton gone. The quiet long-game player who is always closer than you think.</div></div></div>
+      <div class="dc" data-r data-tilt data-spark><div class="dc-top" style="background:linear-gradient(135deg,#00082a,#001050)"><div class="dc-flag">🇹🇭</div><div class="dc-bg-num" style="color:rgba(0,80,255,.15)">23</div><div class="dc-pill" style="color:#0050FF">WILLIAMS</div></div><div class="dc-b"><div class="dc-n">Alex Albon</div><div class="dc-team" style="color:#0050FF">WILLIAMS · #23</div><div class="dc-stats"><div class="ds"><span class="dsv">0</span><span class="dsl">Wins (yet)</span></div><div class="ds"><span class="dsv">28</span><span class="dsl">Age</span></div><div class="ds"><span class="dsv">🥰</span><span class="dsl">Beloved</span></div></div><div class="dc-v">Most universally liked driver in the paddock. Gets things from a Williams the car has no right to give. You root for him automatically. Everyone does. He's the underdog everyone wants to win.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section id="rules" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// chapter 05 — so we know what we're watching</span>
+    <h2 class="big" data-r>The <span>Rules</span> That<br>Actually Matter</h2>
+    <p class="bod" data-r>F1 has hundreds of regulations. Here are the seven that explain 90% of what you'll see on screen.</p>
+    <div class="rl-list">
+      <div class="rl" data-r><div class="rnum">01</div><div><div class="rt">Qualifying Sets Sunday's Grid</div><div class="rd">Saturday qualifying: one flying lap each. The fastest starts first — pole position. At street circuits like Monaco, starting first is nearly decisive because overtaking is near-impossible. A yellow flag, a traffic car, one mistake on that one lap ruins an entire weekend. Saturday matters as much as Sunday.</div><div class="rfun">🏁 "Set the alarm for Saturday too. Qualifying is sometimes more exciting than the race."</div></div></div>
+      <div class="rl" data-r><div class="rnum">02</div><div><div class="rt">DRS — Within 1 Second = Weapon Unlocked</div><div class="rd">Within 1 second of the car ahead in designated zones, you can open your rear wing and gain ~15 km/h. Without DRS, following closely is near-impossible. DRS zones are where lead changes happen. Activating it on a straight to hunt down someone ahead is F1's most electric moment.</div><div class="rfun">🔓 "You'll hear 'DRS is open' and immediately understand why it matters."</div></div></div>
+      <div class="rl" data-r><div class="rnum">03</div><div><div class="rt">Two Tyre Compounds — Mandatory</div><div class="rd">Every driver in a dry race uses at least two tyre types. Everyone pits at least once. The strategy — when, which compound, how many stops — can be worth 10+ seconds. Smarter timing has beaten faster cars. Regularly. The laptop race runs alongside the car race and both decide who wins.</div><div class="rfun">🛞 "More races won in the pit lane than on the track."</div></div></div>
+      <div class="rl" data-r><div class="rnum">04</div><div><div class="rt">Safety Car = Chaos Engine</div><div class="rd">A crash brings out the Safety Car. Everyone queues in race order. Teams pile in for free tyres. A late Safety Car with 5 laps left can completely flip a result that took 80 laps to build. When those boards go out, every team recalculates and every commentator starts shouting. Good.</div><div class="rfun">🚗 "Late Safety Car = the race restarts. 80 laps of work undone in one."</div></div></div>
+      <div class="rl" data-r><div class="rnum">05</div><div><div class="rt">Track Limits — The White Lines</div><div class="rd">Drivers must keep at least part of the car within the white lines. Over them = invalidated qualifying lap or race time penalties. About 70% of post-race online argument involves track limits. Every race. Every weekend. Without exception. You will have opinions about this within two races.</div><div class="rfun">⚖️ "White lines. Everyone knows. Every race, someone forgets."</div></div></div>
+      <div class="rl" data-r><div class="rnum">06</div><div><div class="rt">Points — It's a Marathon</div><div class="rd">1st = 25pts, 2nd = 18, down to 1pt for 10th, plus fastest lap bonus. 24 races. A bad start doesn't end you. In 2021, Verstappen overtook Hamilton on the last lap of the last race of the season to win by 8 points. Nothing is settled until Abu Dhabi in December. Nothing.</div><div class="rfun">🏆 "By May, you will be doing championship maths on a Sunday morning. I already know it."</div></div></div>
+      <div class="rl" data-r><div class="rnum">07</div><div><div class="rt">Sprint Weekends — Double Drama</div><div class="rd">Six weekends a year: a short Saturday race (30% distance) with its own points, plus the full Sunday race. Two qualifying sessions, two races. Sprint weekends are exhausting and extraordinary and the paddock always complains about them and then produces incredible racing anyway.</div><div class="rfun">🏃 "Sprint weekend = twice the drama. We love a sprint weekend."</div></div></div>
+    </div>
+    <span class="lbl" data-r style="margin-top:4rem">// the flags</span>
+    <h3 style="font-family:var(--fw);font-size:clamp(2rem,4vw,3.5rem);color:var(--wh);margin-bottom:1.5rem" data-r>Flags = Racing's <span style="color:var(--r)">Language</span></h3>
+    <div class="fgrid">
+      <div class="fc" data-r><div class="fv" style="background:repeating-conic-gradient(#fff 0% 25%,#000 0% 50%) 0 0/10px 10px;border:1px solid #333"></div><span class="fn">Chequered</span><div class="fm2">Race over. Someone just won.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:#E8002D"></div><span class="fn">Red</span><div class="fm2">Race stopped. Major incident.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:#FFD700"></div><span class="fn">Yellow</span><div class="fm2">Danger zone. No overtaking.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:linear-gradient(135deg,#ff6b00 50%,#000 50%)"></div><span class="fn">Black/Orange</span><div class="fm2">Mechanical issue. Pit now.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:#5555ff"></div><span class="fn">Blue</span><div class="fm2">Faster car approaching. Move.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:linear-gradient(180deg,#ff4444 50%,#ffff00 50%)"></div><span class="fn">Red/Yellow</span><div class="fm2">Slippery surface ahead.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:linear-gradient(135deg,#000 50%,#fff 50%)"></div><span class="fn">Black/White</span><div class="fm2">Unsportsmanlike warning.</div></div>
+      <div class="fc" data-r><div class="fv" style="background:#000;border:1px solid #333"></div><span class="fn">Black</span><div class="fm2">Disqualified. You're done.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="ck"></div>
+
+<!-- CALENDAR -->
+<section id="calendar" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// chapter 06 — our sunday schedule</span>
+    <h2 class="big" data-r>When We <span>Watch Together</span></h2>
+    <p class="bod" data-r><span style="color:#7ec8f0">NJ time in blue.</span> <span style="color:#f0a87e">India time in orange.</span> European races are our sweet spot — 9am my time, 6:30pm yours. These are our Sundays this year.</p>
+    <div class="cw">
+    <table class="ct">
+      <thead><tr><th>Rd</th><th>Grand Prix</th><th>Date</th><th>🇺🇸 NJ Time</th><th>🇮🇳 India Time</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cr">R01</span></td><td><span class="cn">Australian GP</span><span class="cc">Melbourne</span></td><td>Mar 15</td><td><span class="nj">~Midnight 🌙</span></td><td><span class="ind">9:30 AM ☀️</span></td><td><span class="wh2">HARD — NJ midnight</span></td></tr>
+        <tr><td><span class="cr">R02</span></td><td><span class="cn">Chinese GP</span><span class="cc">Shanghai</span></td><td>Mar 22</td><td><span class="nj">~3 AM 😴</span></td><td><span class="ind">12:30 PM ☀️</span></td><td><span class="wh2">HARD — NJ 3am</span></td></tr>
+        <tr><td><span class="cr">R03</span></td><td><span class="cn">Japanese GP</span><span class="cc">Suzuka</span></td><td>Apr 5</td><td><span class="nj">~1 AM 🌙</span></td><td><span class="ind">10:30 AM ☀️</span></td><td><span class="wh2">HARD — NJ 1am</span></td></tr>
+        <tr><td><span class="cr">R04</span></td><td><span class="cn">Bahrain GP</span><span class="cc">Sakhir</span></td><td>Apr 19</td><td><span class="nj">11:00 AM ☀️</span></td><td><span class="ind">8:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R05</span></td><td><span class="cn">Saudi Arabian GP</span><span class="cc">Jeddah</span></td><td>Apr 26</td><td><span class="nj">1:00 PM ☀️</span></td><td><span class="ind">10:30 PM 🌙</span></td><td><span class="wo">GOOD ✓</span></td></tr>
+        <tr><td><span class="cr">R06</span></td><td><span class="cn">Miami GP</span><span class="cc">Miami, USA 🇺🇸</span></td><td>May 10</td><td><span class="nj">4:00 PM ☀️</span></td><td><span class="ind">1:30 AM 🌙</span></td><td><span class="wo">GOOD — late India</span></td></tr>
+        <tr><td><span class="cr">R07</span></td><td><span class="cn">Emilia Romagna GP</span><span class="cc">Imola, Italy</span></td><td>May 17</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr class="our"><td><span class="cr">R08</span></td><td><span class="crn">👑</span><span class="cn">Monaco GP</span><span class="cc">Monte Carlo 🇲🇨</span></td><td>May 24</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wou">OUR RACE 💛</span></td></tr>
+        <tr><td><span class="cr">R09</span></td><td><span class="cn">Spanish GP</span><span class="cc">Barcelona</span></td><td>Jun 1</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R10</span></td><td><span class="cn">Canadian GP</span><span class="cc">Montreal</span></td><td>Jun 15</td><td><span class="nj">2:00 PM ☀️</span></td><td><span class="ind">11:30 PM 🌙</span></td><td><span class="wo">GOOD — late India</span></td></tr>
+        <tr><td><span class="cr">R11</span></td><td><span class="cn">Austrian GP</span><span class="cc">Spielberg</span></td><td>Jun 28</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R12</span></td><td><span class="cn">British GP</span><span class="cc">Silverstone, UK</span></td><td>Jul 6</td><td><span class="nj">10:00 AM ☀️</span></td><td><span class="ind">7:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R13</span></td><td><span class="cn">Hungarian GP</span><span class="cc">Budapest</span></td><td>Jul 26</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R14</span></td><td><span class="cn">Belgian GP</span><span class="cc">Spa-Francorchamps</span></td><td>Aug 2</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R15</span></td><td><span class="cn">Dutch GP</span><span class="cc">Zandvoort</span></td><td>Aug 30</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R16</span></td><td><span class="cn">Italian GP</span><span class="cc">Monza</span></td><td>Sep 6</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R17</span></td><td><span class="cn">Azerbaijan GP</span><span class="cc">Baku</span></td><td>Sep 20</td><td><span class="nj">7:00 AM 🌅</span></td><td><span class="ind">4:30 PM ☀️</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R18</span></td><td><span class="cn">Singapore GP</span><span class="cc">Marina Bay</span></td><td>Oct 4</td><td><span class="nj">8:00 AM ☀️</span></td><td><span class="ind">5:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R19</span></td><td><span class="cn">US GP</span><span class="cc">Austin, Texas 🇺🇸</span></td><td>Oct 18</td><td><span class="nj">4:00 PM ☀️</span></td><td><span class="ind">1:30 AM 🌙</span></td><td><span class="wo">GOOD — late India</span></td></tr>
+        <tr><td><span class="cr">R20</span></td><td><span class="cn">Mexico City GP</span><span class="cc">Mexico City</span></td><td>Oct 25</td><td><span class="nj">3:00 PM ☀️</span></td><td><span class="ind">12:30 AM 🌙</span></td><td><span class="wo">GOOD — late India</span></td></tr>
+        <tr><td><span class="cr">R21</span></td><td><span class="cn">Brazilian GP</span><span class="cc">São Paulo</span></td><td>Nov 8</td><td><span class="nj">1:00 PM ☀️</span></td><td><span class="ind">10:30 PM 🌙</span></td><td><span class="wo">GOOD ✓</span></td></tr>
+        <tr><td><span class="cr">R22</span></td><td><span class="cn">Las Vegas GP</span><span class="cc">Las Vegas 🇺🇸</span></td><td>Nov 21</td><td><span class="nj">10:00 PM 🌙</span></td><td><span class="ind">7:30 AM ☀️</span></td><td><span class="wo">GOOD — late NJ</span></td></tr>
+        <tr><td><span class="cr">R23</span></td><td><span class="cn">Qatar GP</span><span class="cc">Lusail</span></td><td>Nov 29</td><td><span class="nj">12:00 PM ☀️</span></td><td><span class="ind">9:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓</span></td></tr>
+        <tr><td><span class="cr">R24</span></td><td><span class="cn">Abu Dhabi GP</span><span class="cc">Yas Marina — Season Finale</span></td><td>Dec 6</td><td><span class="nj">9:00 AM ☀️</span></td><td><span class="ind">6:30 PM 🌆</span></td><td><span class="wg">PERFECT ✓ 🏆</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div data-r style="margin-top:1.5rem;padding:1.5rem 2rem;background:var(--c1);border:1px solid var(--b);border-radius:6px;font-family:var(--fm);font-size:.7rem;color:var(--mu);line-height:2.2"><span style="color:var(--wh)">Quick read:</span> European races = 9am NJ / 6:30pm India — our window. Asian races are hard for NJ — we watch replay together, same day. <span style="color:var(--g);display:block;margin-top:.3rem">* Times approximate for 2026. Verify at formula1.com before race day.</span></div>
+  </div>
+</section>
+
+<div class="ck"></div>
+
+<!-- JOURNEY -->
+<section id="journey" class="sec">
+  <div class="inn">
+    <span class="lbl" data-r>// the part that matters</span>
+    <h2 class="big" data-r>Every Year,<br><span>An Upgrade.</span></h2>
+    <p class="bod" data-r>The day we get married — <em>this is your first gift.</em> Every year, a race. A new country. Better seats than the year before. No exceptions. We do this until we've run out of calendar and then we start again.</p>
+    <div class="jp-grid">
+      <div class="jp" data-r><div class="jp-left" style="background:linear-gradient(135deg,#0d0a00,#1a1400)"><div class="jp-yr" style="color:var(--r)">Year One</div><span class="jp-flag">🇺🇸</span><div class="jp-country">USA</div><div class="jp-race" style="color:var(--mu)">Austin, Texas · COTA</div></div><div class="jp-right"><div class="jp-t">We Start Where We Are</div><div class="jp-d">Austin. The Circuit of the Americas. We've spent the whole year watching races on a screen — now we're actually there. The noise alone changes everything. You can't understand what 20 F1 cars sound like until they pass you at full speed and you feel it in your chest. That's Year One. We figure it out together, the way we figure out everything.</div><span class="jp-tag up">📍 Austin, Texas — The Start</span></div></div>
+      <div class="jp" data-r><div class="jp-left" style="background:linear-gradient(135deg,#001020,#002040)"><div class="jp-yr" style="color:var(--r)">Year Two</div><span class="jp-flag">🇬🇧</span><div class="jp-country">ENGLAND</div><div class="jp-race" style="color:var(--mu)">Silverstone · British GP</div></div><div class="jp-right"><div class="jp-t">The Home of Formula 1</div><div class="jp-d">Silverstone is where the first ever World Championship race was held in 1950. The British crowd is one of the loudest in sport. London first — a few days, the city, all of it — then out into the Northamptonshire countryside into the oldest Grand Prix circuit in the world. Better seats. Bigger experience. The upgrade is real and we feel it.</div><span class="jp-tag up">✈️ London → Silverstone</span></div></div>
+      <div class="jp" data-r><div class="jp-left" style="background:linear-gradient(135deg,#001a10,#002a20)"><div class="jp-yr" style="color:var(--r)">Year Three</div><span class="jp-flag">🇮🇹</span><div class="jp-country">ITALY</div><div class="jp-race" style="color:var(--mu)">Monza · Italian GP</div></div><div class="jp-right"><div class="jp-t">The Temple of Speed</div><div class="jp-d">Monza. Top speeds over 360 km/h — the fastest circuit on the calendar. The Italian Tifosi turn it into something between a festival and a religious experience. Milan is 30 minutes away. We arrive early, walk the Duomo, eat the actual pasta — then on Sunday we go watch the fastest race in Formula 1. Italy and F1 in one week. The life we always said we wanted.</div><span class="jp-tag up">🇮🇹 Milan → Monza</span></div></div>
+      <div class="jp" data-r><div class="jp-left" style="background:linear-gradient(135deg,#0a0015,#150030)"><div class="jp-yr" style="color:var(--r)">Year Four</div><span class="jp-flag">🇸🇬</span><div class="jp-country">SINGAPORE</div><div class="jp-race" style="color:var(--mu)">Marina Bay · Night Race</div></div><div class="jp-right"><div class="jp-t">Racing Under 300,000 Lights</div><div class="jp-d">The Singapore GP runs at night. 1,500 floodlights. The city skyline — one of Asia's most beautiful — is your backdrop the whole race. Singapore as a city is extraordinary on its own: Gardens by the Bay, Clarke Quay, the food, the architecture. We stay the full weekend. This is the race that makes people go quiet when they describe it to friends who haven't been.</div><span class="jp-tag up">🌃 Singapore — Night Race, Different World</span></div></div>
+      <div class="jp" data-r><div class="jp-left" style="background:linear-gradient(135deg,#1a0805,#2a1008)"><div class="jp-yr" style="color:var(--r)">Year Five</div><span class="jp-flag">🇫🇷</span><div class="jp-country">THE RIVIERA</div><div class="jp-race" style="color:var(--mu)">Monaco · Nice · Antibes · Cannes</div></div><div class="jp-right"><div class="jp-t">The Trip We Owe Ourselves</div><div class="jp-d">We already planned this. Monaco, Nice, Antibes, Cannes — the entire Côte d'Azur. We were going to do it in 2026 and I cancelled it. So we do it properly. Monaco GP the same week as Cannes Film Festival. Harbour full of superyachts. Streets a catwalk. We watch the most glamorous race in the world and then drive along the Riviera and do it right. We owe ourselves this trip and we're taking it.</div><span class="jp-tag up">🌊 Monaco · Nice · Antibes · Cannes — All of It</span></div></div>
+      <div class="jp" data-r style="border-color:rgba(184,151,42,.3)"><div class="jp-left" style="background:linear-gradient(135deg,#1a1000,#2e1e00)"><div class="jp-yr" style="color:var(--g)">The Crown · No Fixed Year</div><span class="jp-flag">👑</span><div class="jp-country" style="color:var(--g)">MONACO</div><div class="jp-race" style="color:rgba(184,151,42,.5)">Paddock Club · The Harbour</div></div><div class="jp-right"><div class="jp-t" style="color:var(--g)">The Best Seat at the Best Race on Earth</div><div class="jp-d">Monaco Paddock Club. $8,000–$12,000 per day. You sit above the pit lane. F1 cars pass underneath at 290 km/h. The harbour is right there. There is champagne. There are people who've been coming for thirty years and still say it's the greatest thing they've ever seen. We get here year by year, upgrade by upgrade. When we walk into that lounge, Neetu — you'll be the most beautiful thing in the room. You always are.</div><span class="jp-tag gold">✨ Monaco Paddock Club — The Destination</span></div></div>
+    </div>
+    <p style="font-family:var(--fs);font-style:italic;color:var(--mu);font-size:.9rem;margin-top:2rem;text-align:center;line-height:1.8" data-r>After Monaco, we reset. New race. New country. Keep going. 24 countries on this calendar and a lifetime to get through them.<br>The only rule: every year is better than the year before.</p>
+  </div>
+</section>
+
+<!-- PROMISE -->
+<section id="promise" class="sec" style="background:var(--bk)">
+  <div class="inn" style="max-width:860px">
+    <span class="lbl" data-r style="text-align:center;display:block">// the vow</span>
+    <h2 class="big" data-r style="text-align:center;font-size:clamp(3rem,7vw,6rem)">I <span>Promise</span> You This.</h2>
+    <div class="pbox" data-r="scale">
+      <p class="pvow">"Neetu — I know we've had a rough few weeks. I know I'm not always easy to love. And I know I've let you down more times recently than I should have. I'm not going to pretend this website fixes that.<br><br>But here is what I know with complete certainty. <strong>I love you. Completely. Without condition. And I am not going anywhere.</strong><br><br>I want the kind of life we used to talk about. The good seats. The right rooms. The moments almost too good to be real. Vegas was one of those. That photographer stopping because we looked so good together — that was one of those. <em>I want a hundred more of those with you.</em><br><br>There is a long road between now and the day we get married. I know that. Some days it feels far. But every single second of it is worth it to me because it ends with you. <strong>It has always ended with you.</strong><br><br>So this is your first gift. A tradition. An F1 race, every year, every year better than the last, until we're at Monaco in the best seats they have and I'm next to the most beautiful person I've ever known — which is you, always you.<br><br><strong>I miss you, Neetu. More than I say. Every moment is for you.</strong>"</p>
+      <div class="psig">— Vasanth · For Neetu · Written with everything I have.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section id="closing">
+  <canvas id="cl-canvas"></canvas>
+  <div class="cl-z">
+    <span class="cl-em">🏎️</span>
+    <div class="cl-t">LIGHTS OUT,<span>NEETU.</span></div>
+    <p class="cl-sub">13,500 kilometres apart right now.<br>Same race. Same second. Same planet.<br><br><em>Race 2 is ours. I'll be there. I promise.</em></p>
+    <div class="podium">
+      <div class="pod"><span class="pem">🥈</span><div class="plbl">Me<br>without you</div><div class="pb p2"></div></div>
+      <div class="pod"><span class="pem">🏆</span><div class="plbl" style="color:var(--g);font-weight:600">Us<br>together</div><div class="pb p1"></div></div>
+      <div class="pod"><span class="pem">🥉</span><div class="plbl">Missing<br>races</div><div class="pb p3"></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Made with <span class="fr">love + a lot of research + a truly unreasonable amount of coffee</span> · For Neetu, from across the ocean<br><span style="font-size:.58rem">Race calendar times approximate for 2026. Verify at formula1.com. EDT (UTC−4) and IST (UTC+5:30).</span></p>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CURSOR — magnetic ring follows with lag
+// ══════════════════════════════════════════════════════
+const curEl=document.getElementById('cur');
+const ringEl=document.getElementById('cur-ring');
+const curCv=document.getElementById('cur-canvas');
+const curCtx=curCv.getContext('2d');
+let mx=0,my=0,rx=0,ry=0;
+function resCV(){curCv.width=window.innerWidth;curCv.height=window.innerHeight}
+resCV();window.addEventListener('resize',resCV);
+
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  curEl.style.left=mx+'px';curEl.style.top=my+'px';
+  trail.push({x:mx,y:my,life:1,vx:(Math.random()-.5)*.5,vy:-Math.random()*.5});
+  if(trail.length>60)trail.shift();
+});
+
+// Magnetic ring
+function animRing(){
+  rx+=(mx-rx)*.12;
+  ry+=(my-ry)*.12;
+  ringEl.style.left=rx+'px';
+  ringEl.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+// Hover states
+document.querySelectorAll('[data-tilt],[data-spark],.bc,.lc,.rl,.jp,.stat-box,a').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{curEl.classList.add('big');ringEl.classList.add('big')});
+  el.addEventListener('mouseleave',()=>{curEl.classList.remove('big');ringEl.classList.remove('big')});
+});
+
+// Trail
+const trail=[];
+function drawTrail(){
+  curCtx.clearRect(0,0,curCv.width,curCv.height);
+  trail.forEach((p,i)=>{
+    p.x+=p.vx;p.y+=p.vy;p.life-=.028;
+    if(p.life<=0)return;
+    const a=p.life*(i/trail.length)*.5;
+    const r=2.5*(i/trail.length);
+    curCtx.beginPath();curCtx.arc(p.x,p.y,r,0,Math.PI*2);
+    curCtx.fillStyle=`rgba(232,0,45,${a})`;curCtx.fill();
+  });
+  requestAnimationFrame(drawTrail);
+}
+drawTrail();
+
+// ══════════════════════════════════════════════════════
+//  SPARK PARTICLE SYSTEM (hover on [data-spark])
+// ══════════════════════════════════════════════════════
+const spCv=document.getElementById('spark-canvas');
+const spCtx=spCv.getContext('2d');
+function resSP(){spCv.width=window.innerWidth;spCv.height=window.innerHeight}
+resSP();window.addEventListener('resize',resSP);
+const sparks2=[];
+function addSpark(x,y,n=6){
+  for(let i=0;i<n;i++){
+    const angle=Math.random()*Math.PI*2;
+    const spd=1+Math.random()*3;
+    sparks2.push({x,y,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd-1,life:1,size:1+Math.random()*2.5,gold:Math.random()>.6});
+  }
+}
+document.querySelectorAll('[data-spark]').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    if(Math.random()>.6)addSpark(e.clientX,e.clientY,2);
+  });
+});
+document.addEventListener('click',e=>{addSpark(e.clientX,e.clientY,18)});
+function animSparks(){
+  spCtx.clearRect(0,0,spCv.width,spCv.height);
+  for(let i=sparks2.length-1;i>=0;i--){
+    const s=sparks2[i];
+    s.x+=s.vx;s.y+=s.vy;s.vy+=.08;s.life-=.022;s.vx*=.98;
+    if(s.life<=0){sparks2.splice(i,1);continue}
+    spCtx.save();spCtx.globalAlpha=s.life*.8;
+    spCtx.fillStyle=s.gold?`rgba(184,151,42,${s.life})`:`rgba(232,0,45,${s.life})`;
+    spCtx.shadowColor=s.gold?'rgba(184,151,42,.5)':'rgba(232,0,45,.5)';
+    spCtx.shadowBlur=4;
+    spCtx.beginPath();spCtx.arc(s.x,s.y,s.size,0,Math.PI*2);spCtx.fill();
+    spCtx.restore();
+  }
+  requestAnimationFrame(animSparks);
+}
+animSparks();
+
+// ══════════════════════════════════════════════════════
+//  PROGRESS BAR
+// ══════════════════════════════════════════════════════
+const prog=document.getElementById('prog');
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  prog.style.width=(window.scrollY/h*100)+'%';
+},{passive:true});
+
+// ══════════════════════════════════════════════════════
+//  TELEMETRY HUD
+// ══════════════════════════════════════════════════════
+const hudGear=document.getElementById('hud-gear');
+const hudSpdB=document.getElementById('hf-spd');const hudSpdV=document.getElementById('hv-spd');
+const hudRpmB=document.getElementById('hf-rpm');const hudRpmV=document.getElementById('hv-rpm');
+const hudThrB=document.getElementById('hf-thr');const hudThrV=document.getElementById('hv-thr');
+const hudDrs=document.getElementById('hud-drs');
+let tSpeed=0,tRpm=0,tThr=0,tGear=1,drsActive=false;
+const gearThresholds=[0,60,120,180,220,270,310,340];
+function updateHud(){
+  // Map scroll to speed
+  const scrollPct=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight)||0;
+  tSpeed=Math.round(30+scrollPct*330);
+  tGear=gearThresholds.findIndex((t,i)=>tSpeed<(gearThresholds[i+1]||999));
+  if(tGear<1)tGear=1;
+  tRpm=Math.round(4000+scrollPct*10000);
+  tThr=Math.round(20+scrollPct*80+Math.sin(Date.now()/800)*8);
+  drsActive=scrollPct>.3&&scrollPct<.85&&Math.sin(Date.now()/2000)>.5;
+  hudGear.textContent=tGear;
+  const spdPct=Math.min((tSpeed/360)*100,100);
+  hudSpdB.style.width=spdPct+'%';hudSpdV.textContent=tSpeed;
+  const rpmPct=Math.min(((tRpm-4000)/10000)*100,100);
+  hudRpmB.style.width=rpmPct+'%';hudRpmV.textContent=(tRpm/1000).toFixed(1)+'k';
+  hudThrB.style.width=Math.min(tThr,100)+'%';hudThrV.textContent=Math.min(tThr,100)+'%';
+  hudDrs.textContent=drsActive?'DRS OPEN ▶':'DRS CLOSED';
+  hudDrs.className=drsActive?'active':'';
+}
+window.addEventListener('scroll',updateHud,{passive:true});
+setInterval(updateHud,100);
+
+// ══════════════════════════════════════════════════════
+//  LOADER — canvas sparks + light sequence
+// ══════════════════════════════════════════════════════
+const ldc=document.getElementById('loader-canvas');
+const ldctx=ldc.getContext('2d');
+function resLD(){ldc.width=window.innerWidth;ldc.height=window.innerHeight}
+resLD();window.addEventListener('resize',resLD);
+const ldSparks=[];
+for(let i=0;i<80;i++){ldSparks.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*1,vy:-Math.random()*1.5,life:Math.random(),decay:.003+Math.random()*.005,size:Math.random()*2,gold:Math.random()>.7})}
+function animLoader(){
+  ldctx.clearRect(0,0,ldc.width,ldc.height);
+  ldSparks.forEach(s=>{
+    s.x+=s.vx;s.y+=s.vy;s.life-=s.decay;
+    if(s.life<=0){s.x=Math.random()*ldc.width;s.y=ldc.height+5;s.life=1;s.vx=(Math.random()-.5);s.vy=-Math.random()*2}
+    ldctx.save();ldctx.globalAlpha=s.life*.4;
+    ldctx.fillStyle=s.gold?`rgba(184,151,42,1)`:`rgba(232,0,45,1)`;
+    ldctx.beginPath();ldctx.arc(s.x,s.y,s.size,0,Math.PI*2);ldctx.fill();
+    ldctx.restore();
+  });
+  if(!loaderDone)requestAnimationFrame(animLoader);
+}
+let loaderDone=false;
+animLoader();
+
+const lmsg=document.getElementById('ld-msg');
+const ldgo=document.getElementById('ld-go');
+const ldr=document.getElementById('loader');
+document.body.style.overflow='hidden';
+let ls=0;
+function nextL(){
+  if(ls<5){document.getElementById('l'+(ls+1)).classList.add('on');ls++;setTimeout(nextL,360);}
+  else{
+    setTimeout(()=>{[1,2,3,4,5].forEach(n=>{const l=document.getElementById('l'+n);l.classList.remove('on');l.classList.add('out2')})},200);
+    setTimeout(()=>{
+      lmsg.style.display='none';
+      ldgo.classList.add('show');
+      // burst of sparks
+      for(let i=0;i<30;i++){
+        ldSparks.push({x:window.innerWidth/2+(Math.random()-.5)*200,y:window.innerHeight/2+(Math.random()-.5)*100,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6-3,life:1,decay:.018,size:1.5+Math.random()*3,gold:Math.random()>.5});
+      }
+    },600);
+    setTimeout(()=>{
+      loaderDone=true;
+      ldr.classList.add('out');
+      setTimeout(()=>{ldr.style.display='none';document.body.style.overflow='';},800);
+    },1300);
+  }
+}
+setTimeout(nextL,500);
+
+// ══════════════════════════════════════════════════════
+//  SCRAMBLE
+// ══════════════════════════════════════════════════════
+const CHARS='!<>-_\\/[]{}—=+*^?#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function scramble(el,text,delay=0){
+  setTimeout(()=>{
+    let iter=0;
+    const iv=setInterval(()=>{
+      el.innerHTML=text.split('').map((c,i)=>{
+        if(i<iter)return c;
+        if(c===' ')return ' ';
+        return '<span style="color:var(--r);opacity:.55">'+CHARS[Math.floor(Math.random()*CHARS.length)]+'</span>';
+      }).join('');
+      if(iter>=text.length)clearInterval(iv);
+      iter+=2;
+    },28);
+  },delay);
+}
+setTimeout(()=>{scramble(document.getElementById('sc1'),'NEETU.',400);scramble(document.getElementById('sc2'),"I'M SORRY.",1000)},1500);
+
+// ══════════════════════════════════════════════════════
+//  HERO CANVAS — speed lines radiate from center
+// ══════════════════════════════════════════════════════
+const hc=document.getElementById('hero-canvas');
+const hctx=hc.getContext('2d');
+function resHC(){hc.width=window.innerWidth;hc.height=window.innerHeight}
+resHC();window.addEventListener('resize',resHC);
+
+const NUM_LINES=120;
+const speedLines=[];
+for(let i=0;i<NUM_LINES;i++){
+  const angle=(i/NUM_LINES)*Math.PI*2;
+  speedLines.push({angle,r:Math.random()*200+50,speed:1+Math.random()*3,len:30+Math.random()*80,alpha:Math.random()*.4+.05,gold:Math.random()>.85});
+}
+const heroSparks=[];
+for(let i=0;i<60;i++){heroSparks.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*1.2,vy:-(0.5+Math.random()*1.8),life:Math.random(),decay:.003+Math.random()*.006,size:.5+Math.random()*1.5,gold:Math.random()>.75})}
+
+function animHero(){
+  hctx.clearRect(0,0,hc.width,hc.height);
+  const cx=hc.width/2,cy=hc.height/2;
+
+  // Moving grid
+  const t=Date.now()/1000;
+  const gs=60,off=(t*18)%gs;
+  hctx.strokeStyle='rgba(232,0,45,0.035)';hctx.lineWidth=1;
+  for(let x=off-gs;x<hc.width+gs;x+=gs){hctx.beginPath();hctx.moveTo(x,0);hctx.lineTo(x,hc.height);hctx.stroke()}
+  for(let y=off-gs;y<hc.height+gs;y+=gs){hctx.beginPath();hctx.moveTo(0,y);hctx.lineTo(hc.width,y);hctx.stroke()}
+
+  // Radial speed lines
+  speedLines.forEach(sl=>{
+    sl.r+=sl.speed;
+    if(sl.r>Math.max(hc.width,hc.height)){sl.r=Math.random()*80;sl.speed=1+Math.random()*3;sl.len=30+Math.random()*80;sl.alpha=Math.random()*.35+.05}
+    const x1=cx+Math.cos(sl.angle)*sl.r;
+    const y1=cy+Math.sin(sl.angle)*sl.r;
+    const x2=cx+Math.cos(sl.angle)*(sl.r-sl.len);
+    const y2=cy+Math.sin(sl.angle)*(sl.r-sl.len);
+    const grad=hctx.createLinearGradient(x2,y2,x1,y1);
+    const col=sl.gold?'184,151,42':'232,0,45';
+    grad.addColorStop(0,`rgba(${col},0)`);
+    grad.addColorStop(1,`rgba(${col},${sl.alpha})`);
+    hctx.beginPath();hctx.moveTo(x2,y2);hctx.lineTo(x1,y1);
+    hctx.strokeStyle=grad;hctx.lineWidth=sl.gold?.8:1.2;hctx.stroke();
+  });
+
+  // Rising embers
+  heroSparks.forEach(s=>{
+    s.x+=s.vx;s.y+=s.vy;s.life-=s.decay;
+    if(s.life<=0){s.x=Math.random()*hc.width;s.y=hc.height+5;s.life=1;s.vx=(Math.random()-.5)*1.2;s.vy=-(0.5+Math.random()*1.8)}
+    hctx.save();hctx.globalAlpha=s.life*.4;
+    hctx.fillStyle=s.gold?'rgba(184,151,42,1)':'rgba(232,0,45,1)';
+    hctx.beginPath();hctx.arc(s.x,s.y,s.size,0,Math.PI*2);hctx.fill();
+    hctx.restore();
+  });
+
+  // Center glow
+  const grd=hctx.createRadialGradient(cx,cy,0,cx,cy,280);
+  grd.addColorStop(0,'rgba(232,0,45,0.06)');grd.addColorStop(1,'transparent');
+  hctx.fillStyle=grd;hctx.fillRect(0,0,hc.width,hc.height);
+
+  requestAnimationFrame(animHero);
+}
+animHero();
+
+// ══════════════════════════════════════════════════════
+//  LETTER CANVAS — floating hearts
+// ══════════════════════════════════════════════════════
+const ltc=document.getElementById('ltr-canvas');
+const ltctx=ltc.getContext('2d');
+function resLTC(){ltc.width=window.innerWidth;ltc.height=window.innerHeight}
+resLTC();window.addEventListener('resize',resLTC);
+const ltrParts=[];
+const ltrShapes=['❤️','💛','✨','⭐','🌹'];
+for(let i=0;i<25;i++){ltrParts.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vy:-(0.25+Math.random()*.6),vx:(Math.random()-.5)*.3,life:Math.random(),decay:.0008+Math.random()*.002,e:ltrShapes[Math.floor(Math.random()*ltrShapes.length)],sz:12+Math.random()*14})}
+function animLtr(){
+  ltctx.clearRect(0,0,ltc.width,ltc.height);
+  ltrParts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;if(p.life<=0){p.x=Math.random()*ltc.width;p.y=ltc.height+20;p.life=1}ltctx.save();ltctx.globalAlpha=p.life*.28;ltctx.font=p.sz+'px serif';ltctx.fillText(p.e,p.x,p.y);ltctx.restore()});
+  requestAnimationFrame(animLtr);
+}
+animLtr();
+
+// ══════════════════════════════════════════════════════
+//  CLOSING CANVAS — full fireworks
+// ══════════════════════════════════════════════════════
+const clc=document.getElementById('cl-canvas');
+const clctx=clc.getContext('2d');
+function resCLC(){clc.width=window.innerWidth;clc.height=window.innerHeight}
+resCLC();window.addEventListener('resize',resCLC);
+const clParts=[];
+const clEmojis=['🏎️','🏁','❤️','✨','💛','⭐','🏆','👑','🥂','🎉'];
+for(let i=0;i<70;i++){
+  const isE=Math.random()>.4;
+  clParts.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*2,vy:-(0.4+Math.random()*2.5),life:Math.random(),decay:.0015+Math.random()*.004,isE,e:isE?clEmojis[Math.floor(Math.random()*clEmojis.length)]:null,sz:isE?14+Math.random()*18:1.5+Math.random()*4,gold:Math.random()>.5});
+}
+function animCL(){
+  clctx.clearRect(0,0,clc.width,clc.height);
+  clParts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vx*=.995;p.vy*=.995;p.life-=p.decay;
+    if(p.life<=0){p.x=Math.random()*clc.width;p.y=clc.height+30;p.life=1;p.vx=(Math.random()-.5)*2;p.vy=-(0.4+Math.random()*2.5)}
+    clctx.save();clctx.globalAlpha=p.life*.75;
+    if(p.isE){clctx.font=p.sz+'px serif';clctx.fillText(p.e,p.x,p.y)}
+    else{
+      clctx.fillStyle=p.gold?'rgba(184,151,42,.9)':'rgba(232,0,45,.9)';
+      clctx.shadowColor=p.gold?'rgba(184,151,42,.4)':'rgba(232,0,45,.4)';clctx.shadowBlur=6;
+      clctx.beginPath();clctx.arc(p.x,p.y,p.sz*.5,0,Math.PI*2);clctx.fill();
+    }
+    clctx.restore();
+  });
+  requestAnimationFrame(animCL);
+}
+animCL();
+
+// ══════════════════════════════════════════════════════
+//  SCROLL REVEAL
+// ══════════════════════════════════════════════════════
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const parent=e.target.parentElement;
+      const isGrid=parent&&parent.matches('.tg,.dg,.bc-grid,.lc-grid,.fgrid,.jp-grid,.stat-row,.rl-list,.sbox');
+      const idx=isGrid?Array.from(parent.children).indexOf(e.target):0;
+      setTimeout(()=>{e.target.classList.add('rIn');addSpark(window.innerWidth/2+(Math.random()-.5)*200,window.innerHeight*.7,3)},isGrid?idx*65:0);
+      ro.unobserve(e.target);
+    }
+  });
+},{threshold:.07});
+document.querySelectorAll('[data-r]').forEach(el=>ro.observe(el));
+
+// ══════════════════════════════════════════════════════
+//  3D TILT
+// ══════════════════════════════════════════════════════
+document.querySelectorAll('[data-tilt]').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`perspective(900px) rotateY(${x*16}deg) rotateX(${-y*12}deg) translateZ(10px) scale(1.02)`;
+    if(Math.random()>.7)addSpark(e.clientX,e.clientY,2);
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';});
+});
+
+// ══════════════════════════════════════════════════════
+//  COUNTERS
+// ══════════════════════════════════════════════════════
+const counters=[
+  {id:'s1',t:24,fmt:v=>Math.round(v)},
+  {id:'s2',t:350,fmt:v=>'$'+Math.round(v)+'M'},
+  {id:'s3',t:362,fmt:v=>Math.round(v)},
+  {id:'s4',t:6,fmt:v=>Math.round(v)+'G'},
+  {id:'s5',t:65000,fmt:v=>'$'+Math.round(v).toLocaleString()},
+];
+const co=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      counters.forEach(c=>{
+        const el=document.getElementById(c.id);if(!el)return;
+        let cur=0;const step=c.t/90;
+        const iv=setInterval(()=>{cur+=step;if(cur>=c.t){cur=c.t;clearInterval(iv)}el.textContent=c.fmt(cur)},14);
+      });
+      co.disconnect();
+    }
+  });
+},{threshold:.3});
+const sr=document.querySelector('.stat-row');if(sr)co.observe(sr);
+
+// ══════════════════════════════════════════════════════
+//  SMOOTH SCROLL
+// ══════════════════════════════════════════════════════
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+</script>
+</body>
+</html>
